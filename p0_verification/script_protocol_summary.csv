@@ -1,0 +1,17 @@
+script,stage,split_function,split_seed,publication,fig,description
+fig4_lunci10/evaluation/run_external_absolute.py,fig4_external_eval_v1,frozen_checkpoints (no split),N/A (inference only),False,N/A (superseded by v2),"External absolute prediction (v1, full manifest - DEPRECATED)"
+fig4_lunci10/evaluation/run_external_absolute_v2.py,fig4_external_eval,frozen_checkpoints (no split),N/A (inference only),True,Fig.4,"External absolute prediction (v2, clean manifest)"
+fig4_lunci10/evaluation/run_external_delta.py,fig4_external_delta,frozen_checkpoints (no split),N/A (inference only),True,Fig.4,External delta prediction (pairwise aromaticity loss)
+fig4_lunci10/training/train_exposure_curve.py,fig4_exposure,global_dev_scaffold_order,42,True,Fig.4,Exposure curve training (Experiment B: 20/40/60/80/100%)
+fig4_lunci10/training/train_l10_exposure.py,fig4_l10_exposure,ring_family_split,5 split seeds (42/123/456/789/2024),True,Fig.4,Ring-family OOD exposure (Experiment C: zero-shot + adaptation)
+fig4_lunci10/training/train_scaffold_ood.py,fig4_scaffold_ood,global_scaffold_split_map,42,True,Fig.4,Scaffold OOD training (Experiment A: E* protocol)
+lunci_test/run_lunci_test.py,lunci_test,canonical_splits,model_seed,False,N/A (diagnostic),Lunci test using old canonical_splits
+multiseed/run_multiseed.py,multiseed,canonical_splits,model_seed (42/123/456/789/2024),False,N/A (exploratory),Multiseed runs using old canonical_splits with model seed as split seed
+stage1_representation_comparison/code/run_stage1_v2.py,stage1,get_final_splits,2026,True,Fig.3,Representation comparison (FP/vanilla GNN/RC-GNN) + 2x2 ablation
+stage2_ring_conditioning/code/ring_conditioning_ablation.py,stage2,get_final_splits,2026,True,Fig.3,2x2 factorial ablation (Base/Membership/LearnableReadout/Joint)
+stage3_mask_pretraining/code/run_mask_pretrain_v2.py,stage3,get_final_splits,2026,True,Fig.3,Mask pretraining comparison (direct/random_mask/ring_mask)
+stage3_mask_pretraining/code/run_pretrain_eval.py,stage3_old,canonical_splits,model_seed,False,N/A (superseded by v2),Old stage3 evaluation using canonical_splits
+stage4_cross_architecture/code/cross_arch_eval.py,stage4_old,canonical_splits,model_seed,False,N/A (superseded by v2),Old stage4 cross-arch using canonical_splits
+stage4_cross_architecture/code/run_stage4_v2.py,stage4,get_final_splits,2026,True,Fig.3,Cross-architecture validation (GNN/GIN/GAT/MPNN/GraphSAGE/DMPNN)
+stage5_ring_flag_sensitivity/code/run_ring_flag_sensitivity.py,stage5,get_final_splits,2026,True,Fig.3,Ring flag sensitivity (0/1/5/10) -> binary membership decision
+stage6_final_membership/code/run_final_membership.py,stage6,get_final_splits,2026,True,Fig.3,Final membership model (binary + learnable projection)

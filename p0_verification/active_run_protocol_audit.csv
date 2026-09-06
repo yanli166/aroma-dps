@@ -1,0 +1,68 @@
+result_root,relative_path,stage,task,model_seed,split_seed,split_function,feature_mode,protocol,publication_run,test_set_hash,has_meta_json,has_result_csv,n_result_files,active_process
+results_v2,results_v2/stage1/seed_11/explicit_aromaticity_ablated,stage1,unknown,11,2026,get_final_splits,explicit_aromaticity_ablated,PROTOCOL_SPEC Stage1 (P0-1 v2 + P0-2),True,7bd58dd4b8f56858,True,True,4,True
+results_v2,results_v2/stage1/seed_11/standard,stage1,unknown,11,2026,get_final_splits,standard,PROTOCOL_SPEC Stage1 (P0-1 v2 + P0-2),True,f34d202e066e91c4,True,True,4,True
+results_v2,results_v2/ring_flag_sensitivity/seed_11/explicit_aromaticity_ablated,stage5,unknown,11,2026,get_final_splits,explicit_aromaticity_ablated,PROTOCOL_SPEC ring_flag_sensitivity (P1-1 expanded),True,N/A,True,True,2,True
+results_v2,results_v2/ring_flag_sensitivity/seed_11/standard,stage5,unknown,11,2026,get_final_splits,standard,PROTOCOL_SPEC ring_flag_sensitivity (P1-1 expanded),True,N/A,True,True,2,True
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4,stage4,unknown,unknown,2026,get_final_splits,unknown,unknown,True,b747d1ea9a288e7a,False,True,3,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/seed_11/explicit_aromaticity_ablated,stage4,unknown,11,2026,get_final_splits,explicit_aromaticity_ablated,PROTOCOL_SPEC Stage4 (P0-1 v2 + P0-2),True,c57b2fbfcf0123c4,True,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/seed_11/standard,stage4,unknown,11,2026,get_final_splits,standard,PROTOCOL_SPEC Stage4 (P0-1 v2 + P0-2),True,fcb0fb5e9c4eed03,True,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/DMPNN,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,ecbb2c481b92269f,True,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/DMPNN/seed_11/NICS_1zz/DMPNN_base,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/DMPNN/seed_11/NICS_1zz/DMPNN_membership,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/DMPNN/seed_11/MBCO/DMPNN_base,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/DMPNN/seed_11/MBCO/DMPNN_membership,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/DMPNN/seed_11/HOMA/DMPNN_base,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/DMPNN/seed_11/HOMA/DMPNN_membership,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/MPNN,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,14ae9d2ef5f3ee56,True,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/MPNN/seed_11/NICS_1zz/MPNN_base,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/MPNN/seed_11/NICS_1zz/MPNN_membership,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/MPNN/seed_11/MBCO/MPNN_base,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/MPNN/seed_11/MBCO/MPNN_membership,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/MPNN/seed_11/HOMA/MPNN_base,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/MPNN/seed_11/HOMA/MPNN_membership,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/GAT,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,4a6cabcf6de98747,True,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/GAT/seed_11/NICS_1zz/GAT_membership,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/GAT/seed_11/NICS_1zz/GAT_base,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/GAT/seed_11/MBCO/GAT_membership,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/GAT/seed_11/MBCO/GAT_base,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/GAT/seed_11/HOMA/GAT_membership,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/GAT/seed_11/HOMA/GAT_base,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/GIN,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,a84e134d1df805c4,True,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/GIN/seed_11/NICS_1zz/GIN_membership,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/GIN/seed_11/NICS_1zz/GIN_base,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/GIN/seed_11/MBCO/GIN_membership,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/GIN/seed_11/MBCO/GIN_base,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/GIN/seed_11/HOMA/GIN_membership,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage4/partial/GIN/seed_11/HOMA/GIN_base,stage4,unknown,11,2026,get_final_splits,unknown,PROTOCOL_SPEC Stage4 (P0 #8),True,N/A,False,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/final_membership/seed_11/explicit_aromaticity_ablated,stage6,unknown,11,2026,get_final_splits,explicit_aromaticity_ablated,PROTOCOL_SPEC final_membership (P1-1 follow-up),True,N/A,True,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/final_membership/seed_11/standard,stage6,unknown,11,2026,get_final_splits,standard,PROTOCOL_SPEC final_membership (P1-1 follow-up),True,N/A,True,True,2,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage2/seed_11,stage2,unknown,11,2026,get_final_splits,unknown,unknown,True,dce39aacc74756ce,False,True,3,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage2/seed_11/explicit_aromaticity_ablated,stage2,unknown,11,2026,get_final_splits,explicit_aromaticity_ablated,PROTOCOL_SPEC Stage2 (P0-1 v2 + P0-2),True,3d8b33b54d3aa35f,True,True,4,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage2/seed_11/standard,stage2,unknown,11,2026,get_final_splits,standard,PROTOCOL_SPEC Stage2 (P0-1 v2 + P0-2),True,465ab4c3246d4896,True,True,4,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage1/seed_11,stage1,unknown,11,2026,get_final_splits,unknown,unknown,True,d89e271f222e3e13,False,True,3,True
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage1/seed_11/explicit_aromaticity_ablated,stage1,unknown,11,2026,get_final_splits,explicit_aromaticity_ablated,PROTOCOL_SPEC Stage1 (P0-1 v2 + P0-2),True,7bd58dd4b8f56858,True,True,4,True
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage1/seed_11/standard,stage1,unknown,11,2026,get_final_splits,standard,PROTOCOL_SPEC Stage1 (P0-1 v2 + P0-2),True,f34d202e066e91c4,True,True,4,True
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/ring_flag_sensitivity/seed_11/explicit_aromaticity_ablated,stage5,unknown,11,2026,get_final_splits,explicit_aromaticity_ablated,PROTOCOL_SPEC ring_flag_sensitivity (P1-1 expanded),True,N/A,True,True,2,True
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/ring_flag_sensitivity/seed_11/standard,stage5,unknown,11,2026,get_final_splits,standard,PROTOCOL_SPEC ring_flag_sensitivity (P1-1 expanded),True,N/A,True,True,2,True
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage3/seed_11,stage3,unknown,11,2026,get_final_splits,unknown,unknown,True,4ac3f900c7b1e8cb,False,True,6,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage3/seed_11/NICS_1zz/random_mask_pretrain,stage3,unknown,11,2026,get_final_splits,unknown,unknown,True,e3cbf3633dbb8296,False,True,3,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage3/seed_11/NICS_1zz/direct_supervised,stage3,unknown,11,2026,get_final_splits,unknown,unknown,True,fe2218fed8909b8c,False,True,3,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage3/seed_11/NICS_1zz/ring_mask_pretrain,stage3,unknown,11,2026,get_final_splits,unknown,unknown,True,0951feb3c52c0681,False,True,3,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage3/seed_11/MBCO/random_mask_pretrain,stage3,unknown,11,2026,get_final_splits,unknown,unknown,True,bb3fa7275afd53d1,False,True,3,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage3/seed_11/MBCO/direct_supervised,stage3,unknown,11,2026,get_final_splits,unknown,unknown,True,26a5fec5bd872023,False,True,3,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage3/seed_11/MBCO/ring_mask_pretrain,stage3,unknown,11,2026,get_final_splits,unknown,unknown,True,4ac7c162f701a793,False,True,3,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage3/seed_11/HOMA/random_mask_pretrain,stage3,unknown,11,2026,get_final_splits,unknown,unknown,True,9759af551d22992a,False,True,3,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage3/seed_11/HOMA/direct_supervised,stage3,unknown,11,2026,get_final_splits,unknown,unknown,True,530a5270c338f75c,False,True,3,False
+results_v2_backup_pre_bugfix,results_v2_backup_pre_bugfix/stage3/seed_11/HOMA/ring_mask_pretrain,stage3,unknown,11,2026,get_final_splits,unknown,unknown,True,9c96d4ef0b5e5555,False,True,3,False
+results,results/stage3_mask_pretraining,stage3,HOMA,unknown,model_seed (old protocol),canonical_splits,unknown,unknown,False,fb54908c662a9ad8,False,True,1,False
+results,results/stage3_mask_pretraining,stage3,MBCO,unknown,model_seed (old protocol),canonical_splits,unknown,unknown,False,fb54908c662a9ad8,False,True,1,False
+results,results/stage3_mask_pretraining,stage3,NICS_1zz,unknown,model_seed (old protocol),canonical_splits,unknown,unknown,False,fb54908c662a9ad8,False,True,1,False
+results,results/stage3_mask_pretraining/seed_11/NICS_1zz/random_mask_pretrain,stage3,unknown,11,model_seed (old protocol),canonical_splits,unknown,unknown,False,N/A,False,True,2,False
+results,results/stage3_mask_pretraining/seed_11/NICS_1zz/direct_supervised,stage3,unknown,11,model_seed (old protocol),canonical_splits,unknown,unknown,False,N/A,False,True,2,False
+results,results/stage3_mask_pretraining/seed_11/NICS_1zz/ring_mask_pretrain,stage3,unknown,11,model_seed (old protocol),canonical_splits,unknown,unknown,False,N/A,False,True,2,False
+results,results/stage3_mask_pretraining/seed_11/MBCO/random_mask_pretrain,stage3,unknown,11,model_seed (old protocol),canonical_splits,unknown,unknown,False,N/A,False,True,2,False
+results,results/stage3_mask_pretraining/seed_11/MBCO/direct_supervised,stage3,unknown,11,model_seed (old protocol),canonical_splits,unknown,unknown,False,N/A,False,True,2,False
+results,results/stage3_mask_pretraining/seed_11/MBCO/ring_mask_pretrain,stage3,unknown,11,model_seed (old protocol),canonical_splits,unknown,unknown,False,N/A,False,True,2,False
+results,results/stage3_mask_pretraining/seed_11/HOMA/random_mask_pretrain,stage3,unknown,11,model_seed (old protocol),canonical_splits,unknown,unknown,False,N/A,False,True,2,False
+results,results/stage3_mask_pretraining/seed_11/HOMA/direct_supervised,stage3,unknown,11,model_seed (old protocol),canonical_splits,unknown,unknown,False,N/A,False,True,2,False
+results,results/stage3_mask_pretraining/seed_11/HOMA/ring_mask_pretrain,stage3,unknown,11,model_seed (old protocol),canonical_splits,unknown,unknown,False,N/A,False,True,2,False

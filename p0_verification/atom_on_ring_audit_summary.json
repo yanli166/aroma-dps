@@ -1,0 +1,36 @@
+{
+  "audit_type": "atom_on_ring_index_base",
+  "datasets": [
+    "HOMA",
+    "NICS",
+    "MCBO"
+  ],
+  "total_rows": 20605,
+  "verdicts": {
+    "0based": 20605,
+    "1based": 0,
+    "ambiguous": 0,
+    "error": 0
+  },
+  "conclusion": "0-based",
+  "per_dataset": {
+    "HOMA": {
+      "total": 6858,
+      "verdicts": {
+        "0based": 6858
+      }
+    },
+    "NICS": {
+      "total": 6820,
+      "verdicts": {
+        "0based": 6820
+      }
+    },
+    "MCBO": {
+      "total": 6927,
+      "verdicts": {
+        "0based": 6927
+      }
+    }
+  }
+}
