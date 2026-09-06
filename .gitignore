@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Results & Data (too large for git)
+results/
+results_v2/
+results_v2_backup*/
+*.pth
+*.pt
+*.ckpt
+*.npz
+*.npy
+*.pkl
+*.pickle
+
+# Logs
+*.log
+logs/
+logs_v2_rerun/
+
+# Temporary files
+_tmp_*
+*.tmp
+*.bak
+*~
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data files (keep split manifests, exclude large data)
+*.csv
+*.xlsx
+*.xls
+*.parquet
+*.feather
+*.h5
+*.hdf5
+
+# Allow split manifests (small JSON files in splits/)
+!0831-end-code/splits/*.json
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Conda/venv
+.env
+.venv
+env/
+venv/
+
+# Images (keep in results, not in code)
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.pdf

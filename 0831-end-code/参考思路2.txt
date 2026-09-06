@@ -1,0 +1,1558 @@
+下面这版可以直接复制给你的代码AI。它不是“帮我优化代码”这种泛提示词，而是按你的论文逻辑、Fig.3/Fig.4实验协议和JACS审稿标准写的“重构任务书”。我把每一项都标了优先级和必要性，并明确哪些必须重跑、哪些保留、哪些先放SI。
+
+---
+
+# 可直接复制给代码AI的完整提示词
+
+你现在是一名**顶级计算化学、图神经网络、机器学习实验设计与科研代码审计专家**。你的任务不是简单修bug，而是对我的芳香性预测项目进行一次**面向JACS论文投稿标准的实验协议重构和代码修改**。
+
+项目科学目标是：构建一个针对**目标化学环（target ring）**的多维芳香性预测模型，预测 HOMA、NICS(1)zz、MCBO/nMCBO，并通过系统OOD测试证明模型不仅能在随机插值场景下取得高准确度，还能学习具有化学外推能力的环级表示。论文主线为：
+
+[
+\text{Concept}
+\rightarrow
+\text{Dataset}
+\rightarrow
+\text{Ring-conditioned representation}
+\rightarrow
+\text{OOD generalization}
+\rightarrow
+\text{Reaction-level }\Delta\text{aromaticity}
+]
+
+其中 Fig.3 负责回答：
+
+[
+\boxed{\text{What information actually improves ring-level aromaticity prediction?}}
+]
+
+Fig.4 负责回答：
+
+[
+\boxed{\text{Does the model interpolate known chemistry or generalize to unseen chemistry?}}
+]
+
+请严格按照下面的优先级执行。不要为了追求“结果更好”修改实验定义，不得使用测试集选择模型，不得隐性删除不利结果，不得覆盖旧结果。所有修改必须保证可复现，并保留旧实验作为 `legacy` 或 `pilot` 结果。
+
+---
+
+## 一、P0：必须完成，否则后续结果不能用于正式论文
+
+### 1. 重构数据划分协议：固定20% final holdout
+
+**优先级：P0**
+
+**必要性：最高，属于实验有效性问题。**
+
+当前代码中：
+
+```python
+canonical_splits(n, seed=seed, groups=data["smiles"])
+```
+
+会使不同seed生成不同测试集，同时seed还控制模型初始化，因此当前5-seed的mean±std混合了：
+
+* 数据划分随机性；
+* 参数初始化随机性；
+* batch shuffle；
+* dropout等训练随机性。
+
+正式实验必须修改为：
+
+[
+D =
+D_{\mathrm{dev}}(80%)
++
+D_{\mathrm{test}}(20%)
+]
+
+其中20%测试集只生成一次，并在所有 Stage 1–4 中保持完全固定。
+
+请增加类似：
+
+```python
+SPLIT_SEED = 2026
+MODEL_SEEDS = [11, 22, 33, 44, 55]
+```
+
+要求：
+
+```python
+final_holdout = make_final_holdout(
+    groups=canonical_molecule_id,
+    test_size=0.20,
+    seed=SPLIT_SEED
+)
+```
+
+将split永久保存，例如：
+
+```text
+splits/
+├── final_holdout_seed2026.json
+└── development_indices.json
+```
+
+后续任何实验不得重新生成final test。
+
+**验收标准：**
+
+同一个任务中，不管model seed是多少：
+
+```python
+test_indices(seed=11)
+==
+test_indices(seed=22)
+==
+...
+```
+
+必须恒为True。
+
+---
+
+### 2. 80% development set内部进行Group 5-fold CV
+
+**优先级：P0**
+
+**必要性：最高。**
+
+在固定的80% development set内部：
+
+[
+D_{\mathrm{dev}}
+\rightarrow
+5\text{-fold Group CV}
+]
+
+必须继续按母分子分组。
+
+CV仅用于：
+
+* 超参数选择；
+* backbone选择；
+* Stage 2配置选择；
+* pretraining策略选择；
+* early-stopping行为估计。
+
+**严禁final test参与上述任何决策。**
+
+请拆分当前`canonical_splits()`，不要一个函数同时承担test和CV：
+
+```python
+make_final_holdout(...)
+make_inner_group_cv(...)
+train_final_model(...)
+```
+
+建议接口：
+
+```python
+trainval_idx, test_idx = make_final_holdout(...)
+
+folds = make_inner_group_cv(
+    trainval_idx=trainval_idx,
+    groups=groups,
+    n_splits=5
+)
+```
+
+---
+
+### 3. 分组ID由原始SMILES升级为canonical molecular identity
+
+**优先级：P0**
+
+**必要性：非常高，防止同一分子不同SMILES形式跨split。**
+
+当前：
+
+```python
+groups = data["smiles"]
+```
+
+方向正确，但需要改成：
+
+```python
+canonical_smiles
+```
+
+或更稳妥：
+
+```python
+InChIKey
+```
+
+建议：
+
+```python
+def canonicalize_smiles(smi):
+    mol = Chem.MolFromSmiles(smi)
+    if mol is None:
+        raise ValueError(...)
+    return Chem.MolToSmiles(
+        mol,
+        canonical=True,
+        isomericSmiles=True
+    )
+```
+
+最终：
+
+```python
+groups = df["smiles"].map(canonicalize_smiles)
+```
+
+增加自动检查：
+
+```python
+assert set(train_groups).isdisjoint(set(test_groups))
+```
+
+并检查每个CV fold：
+
+```python
+assert set(train_groups).isdisjoint(set(val_groups))
+```
+
+---
+
+### 4. 修复batch size=1导致的0维tensor错误
+
+**优先级：P0**
+
+**必要性：最高。**
+
+当前NICS seed=123失败的根因是：
+
+```text
+zero-dimensional tensor cannot be concatenated
+```
+
+请检查`train_eval.py`中所有：
+
+```python
+.squeeze()
+.squeeze(-1)
+```
+
+可能导致batch=1时tensor变成scalar的地方。
+
+统一改为：
+
+```python
+pred = pred.reshape(-1)
+target = target.reshape(-1)
+```
+
+evaluation中使用：
+
+```python
+all_preds.append(pred.detach().cpu().reshape(-1))
+all_targets.append(target.detach().cpu().reshape(-1))
+
+all_preds = torch.cat(all_preds, dim=0)
+all_targets = torch.cat(all_targets, dim=0)
+```
+
+同时增加unit test：
+
+```python
+batch_size = 1
+batch_size = 2
+batch_size = 32
+```
+
+均必须成功运行。
+
+---
+
+### 5. 增加实验完整性检查，禁止静默缺seed
+
+**优先级：P0**
+
+**必要性：最高。**
+
+当前聚合代码：
+
+```python
+groupby(...).agg(mean, std)
+```
+
+会静默忽略缺失run，这是不可接受的。
+
+每个Stage结束后必须构造理论完整实验组合。
+
+例如Stage1 GNN：
+
+[
+6\times3\times5=90
+]
+
+Stage2：
+
+[
+4\times3\times5=60
+]
+
+Stage4：
+
+[
+4\times2\times3\times5=120
+]
+
+增加类似：
+
+```python
+expected = pd.MultiIndex.from_product(
+    [models, tasks, seeds],
+    names=["model", "task", "seed"]
+)
+
+actual = df.set_index(
+    ["model", "task", "seed"]
+).index
+
+missing = expected.difference(actual)
+
+if len(missing) > 0:
+    raise RuntimeError(
+        f"Missing experimental runs:\n{missing}"
+    )
+```
+
+**只要有缺失run，就禁止生成最终summary。**
+
+另外在结果文件中增加：
+
+```text
+n_seeds
+run_status
+error_message
+```
+
+---
+
+### 6. 明确区分CV结果与Final Test结果
+
+**优先级：P0**
+
+**必要性：最高。**
+
+当前不能再把所有结果混成`per_seed_results.csv`后直接选模型。
+
+请至少生成：
+
+```text
+results/
+├── cv_results.csv
+├── hyperparameter_search.csv
+├── selected_config.json
+└── final_test_results.csv
+```
+
+规则：
+
+**模型选择只看：**
+
+```text
+cv_results
+```
+
+**final test只负责最后报告：**
+
+```text
+final_test_results
+```
+
+任何函数不得通过test MAE/test R²决定best model。
+
+---
+
+## 二、P0：重构Fig.3的Stage 2和Stage 4逻辑
+
+### 7. Stage 2保留2×2因子设计，但只根据CV选择winner
+
+**优先级：P0**
+
+**必要性：最高，因为这是Fig.3的核心科学实验。**
+
+保持：
+
+```python
+CONFIGS = {
+    "base": {
+        "ring_flag": False,
+        "readout": "fixed_avg"
+    },
+
+    "membership": {
+        "ring_flag": True,
+        "readout": "fixed_avg"
+    },
+
+    "learnable_readout": {
+        "ring_flag": False,
+        "readout": "attention"
+    },
+
+    "joint": {
+        "ring_flag": True,
+        "readout": "attention"
+    }
+}
+```
+
+科学问题是：
+
+[
+\text{Does target-ring identity matter?}
+]
+
+以及：
+
+[
+\text{Does attention/readout flexibility matter?}
+]
+
+只能根据5-fold CV的validation metric选择最优配置。
+
+当前pilot结果显示Membership最好，但正式代码不得硬编码：
+
+```python
+BEST = "membership"
+```
+
+必须通过：
+
+```python
+best_config = select_by_cv(...)
+```
+
+自动得到。
+
+如果正式重跑后仍是Membership，则冻结：
+
+[
+\boxed{
+Ring\ conditioning
+==================
+
+ring\ membership
++
+fixed\ pooling
+}
+]
+
+---
+
+### 8. Stage 4必须改为Base vs Membership，而不是Base vs Joint
+
+**优先级：P0**
+
+**必要性：最高，当前Stage4存在变量混杂。**
+
+当前：
+
+```text
+base:
+ring_flag=0
+readout=fixed_avg
+```
+
+vs
+
+```text
+ring_cond:
+ring_flag=10
+readout=attention
+```
+
+同时改变了：
+
+* ring membership；
+* readout类型。
+
+因此无法归因。
+
+正式Stage4必须改成：
+
+```text
+Base
+ring_flag = 0
+readout = fixed_avg
+```
+
+vs
+
+```text
+Ring-conditioned
+ring_flag = 10
+readout = fixed_avg
+```
+
+即：
+
+[
+\boxed{
+only\ target-ring\ membership\ changes
+}
+]
+
+对以下backbone统一测试：
+
+```text
+MPNN
+GIN
+GAT
+DMPNN
+```
+
+主要分析：
+
+[
+\Delta MAE
+==========
+
+## MAE_{\rm base}
+
+MAE_{\rm membership}
+]
+
+同时保留：
+
+[
+\Delta R^2
+]
+
+作为辅助。
+
+最终Fig.3c优先展示：
+
+```text
+% MAE reduction
+```
+
+而不是只展示R²。
+
+---
+
+## 三、P1：必须做公平baseline，否则传统ML/GNN比较不严谨
+
+### 9. 修正传统ML中的feature scaling问题
+
+**优先级：P1**
+
+**必要性：很高。**
+
+当前2244维包含：
+
+* MACCS binary；
+* Morgan binary；
+* molecular continuous descriptors；
+* ring continuous/categorical descriptors。
+
+SVM/KRR/MLP对尺度敏感，因此当前KRR负R²不能用于正式结论。
+
+请将特征拆分为：
+
+```python
+X_binary
+X_continuous
+```
+
+对于：
+
+```text
+SVM
+KRR
+MLP
+```
+
+只对continuous features进行train-only scaling。
+
+原则：
+
+[
+\mu,\sigma
+]
+
+只能由当前training fold计算。
+
+不能用全数据拟合scaler。
+
+推荐：
+
+```python
+ColumnTransformer(...)
+```
+
+或自定义pipeline。
+
+树模型：
+
+```text
+CatBoost
+LightGBM
+XGBoost
+RF
+ExtraTrees
+```
+
+无需强制standardization。
+
+---
+
+### 10. 增加小规模、公平的超参数搜索
+
+**优先级：P1**
+
+**必要性：很高。**
+
+不得在完全未调参情况下写：
+
+> DMPNN intrinsically performs poorly
+
+或者：
+
+> KRR fails.
+
+所有模型采用统一且有限的搜索预算。
+
+不要做巨大grid search。
+
+推荐：
+
+[
+20\sim30
+]
+
+trials / model / task。
+
+GNN建议：
+
+```python
+hidden_dim = [128, 256, 512]
+num_layers = [3, 4, 5]
+lr = [1e-4, 3e-4, 1e-3, 3e-3]
+dropout = [0.0, 0.1, 0.2, 0.3]
+weight_decay = [0, 1e-5, 1e-4]
+```
+
+用：
+
+```text
+Optuna
+```
+
+或Random Search。
+
+所有GNN backbone使用相同trial budget。
+
+传统ML重点搜索：
+
+```text
+CatBoost
+LightGBM
+ExtraTrees
+SVM
+KRR
+MLP
+```
+
+不要为了省时间只调某一个模型。
+
+选择objective：
+
+[
+CV\ MAE
+]
+
+---
+
+### 11. 训练loss和模型选择指标分开
+
+**优先级：P1**
+
+**必要性：中高。**
+
+反向传播可以继续使用：
+
+```python
+nn.MSELoss()
+```
+
+但：
+
+* early stopping；
+* best checkpoint；
+* hyperparameter ranking；
+
+建议统一改为：
+
+[
+validation\ MAE
+]
+
+即：
+
+```python
+if val_mae < best_val_mae:
+    save_checkpoint()
+```
+
+最终报告：
+
+```text
+MAE — primary
+RMSE — secondary
+R² — secondary
+```
+
+原因是R²在0.97–0.99区间已经饱和，难以体现实际误差改善。
+
+---
+
+## 四、P1：必须控制“芳香性定义泄漏”
+
+### 12. 建立Standard feature与Aromaticity-free feature双轨实验
+
+**优先级：P1**
+
+**必要性：很高，属于潜在审稿核心问题。**
+
+当前2244维指纹和GNN节点特征中存在：
+
+```text
+is_aromatic
+aromatic bond
+n_aromatic_rings
+ring_n_aromatic
+```
+
+虽然不是直接label leakage，但存在：
+
+> 使用一种预定义芳香性判据预测另一种芳香性指标
+
+的概念循环风险。
+
+不要直接删除现有特征体系。
+
+请建立两个feature mode：
+
+```python
+feature_mode = "standard"
+feature_mode = "aromaticity_free"
+```
+
+Standard保留现有常规cheminformatics输入。
+
+Aromaticity-free必须删除至少：
+
+```text
+atom_is_aromatic
+bond_is_aromatic
+n_aromatic_rings
+ring_n_aromatic
+```
+
+target-ring membership必须保留，因为它只是告诉模型：
+
+> 哪些原子属于待评价目标环
+
+并没有告诉模型芳香性大小。
+
+---
+
+### 13. 对Morgan/MACCS的aromaticity dependency进行显式控制
+
+**优先级：P1**
+
+**必要性：高。**
+
+不要简单假设：
+
+```python
+Chem.Kekulize(...)
+```
+
+就等于完全aromaticity-free。
+
+请：
+
+1. 明确记录MACCS/Morgan构造方式；
+2. 测试Kekulé representation；
+3. 尽可能使用不依赖aromatic flag的atom/bond invariants；
+4. 加入单元测试，确认同一个芳香结构在不同合法Kekulé形式下fingerprint稳定或结果可解释。
+
+最终输出一个SI control：
+
+```text
+Standard aromaticity-aware features
+vs
+Aromaticity-free features
+```
+
+如果性能仍然很高，这是非常重要的论文证据。
+
+---
+
+## 五、P1/P2：Stage 3 Mask Pretraining重新定位
+
+### 14. Stage 3不能继续使用Joint作为encoder
+
+**优先级：P1**
+
+**必要性：如果保留Stage3，则必须。**
+
+当前Stage3实际使用：
+
+```text
+ring_flag=10
+attention
+```
+
+即Joint。
+
+若Stage2正式CV最终winner仍是Membership，则Stage3必须改成：
+
+```python
+encoder = RingConditionedGNN(
+    ring_flag=True,
+    readout="fixed_avg"
+)
+```
+
+然后重新比较：
+
+```text
+direct_supervised
+random_mask_pretrain
+ring_mask_pretrain
+```
+
+---
+
+### 15. Stage 3暂时不要作为Fig.3核心，除非OOD中明显有效
+
+**优先级：P2**
+
+**必要性：不是必须。**
+
+当前pilot：
+
+```text
+HOMA: ring mask略差
+MBCO: ring mask略差
+NICS: ring mask略好
+```
+
+因此不得写：
+
+> Ring-aware mask consistently improves prediction.
+
+先保留为探索性实验。
+
+随后在Fig.4中测试：
+
+```text
+ring-family OOD
+substituent OOD
+```
+
+如果ring-mask在OOD中产生明显且重复的收益，例如：
+
+[
+
+> 5%-10%
+> ]
+
+MAE reduction，再考虑进入主文。
+
+否则：
+
+```text
+Stage 3 → Supporting Information
+```
+
+---
+
+## 六、P1：最终模型的训练随机性与误差条定义
+
+### 16. Model seed不得再改变数据split
+
+**优先级：P1**
+
+**必要性：很高。**
+
+新的5 seeds只允许改变：
+
+* weight initialization；
+* mini-batch order；
+* dropout；
+* stochastic optimization。
+
+不能改变：
+
+* development/test split；
+* inner CV folds。
+
+这样：
+
+[
+mean\pm SD
+]
+
+才能解释为：
+
+> optimization stochasticity.
+
+---
+
+### 17. 建议增加paired bootstrap置信区间
+
+**优先级：P2**
+
+**必要性：增强统计可信度。**
+
+对固定final test：
+
+```text
+Base vs Membership
+```
+
+使用paired bootstrap：
+
+[
+1000
+]
+
+次。
+
+计算：
+
+[
+\Delta MAE
+==========
+
+## MAE_{\rm Base}
+
+MAE_{\rm Membership}
+]
+
+并报告：
+
+[
+95%\ CI
+]
+
+如果CI全部>0，可支持：
+
+> Ring membership significantly/reliably reduces prediction error.
+
+注意只有统计结果支持时才能这样写。
+
+---
+
+## 七、P1：重新组织Stage 1–4，使代码对应论文Fig.3逻辑
+
+正式Fig.3不要再以“Stage越多越好”为目标，而要对应四个科学问题。
+
+### Fig.3a — Interpolation benchmark
+
+代码输出：
+
+```text
+best fingerprint ML
+best vanilla GNN
+ring-conditioned model
+```
+
+正文只需要核心代表。
+
+完整8 ML + 6 GNN：
+
+```text
+Supporting Information
+```
+
+回答：
+
+[
+\boxed{
+Can\ aromaticity\ be\ learned\ under\ interpolation?
+}
+]
+
+---
+
+### Fig.3b — 2×2 mechanistic ablation
+
+输出：
+
+```text
+Base
+Membership
+LearnableReadout
+Joint
+```
+
+主要使用：
+
+```text
+MAE
+ΔMAE relative to Base
+```
+
+回答：
+
+[
+\boxed{
+What\ information\ actually\ causes\ the\ improvement?
+}
+]
+
+如果结果仍然是Membership最好，则论文结论应为：
+
+> Explicit target-ring membership, rather than increased readout complexity, accounts for most of the gain.
+
+---
+
+### Fig.3c — Cross-backbone validation
+
+只比较：
+
+```text
+Base vs Membership
+```
+
+×：
+
+```text
+MPNN
+GIN
+GAT
+DMPNN
+```
+
+回答：
+
+[
+\boxed{
+Is\ target-ring\ conditioning\ architecture-independent?
+}
+]
+
+不要使用Joint替代Membership。
+
+---
+
+### Fig.3d — 优先考虑Feature Leakage Control
+
+如果Stage3 mask没有明显OOD优势，我建议正式Fig.3d改为：
+
+```text
+Standard features
+vs
+Aromaticity-free features
+```
+
+回答：
+
+[
+\boxed{
+Does\ the\ model\ still\ learn\ aromaticity
+without\ predefined\ aromaticity\ labels?
+}
+]
+
+这个实验从审稿角度比“mask pretraining略升0.005”更重要。
+
+---
+
+## 八、P1：为Fig.4提前重构OOD代码接口
+
+Fig.4必须与Fig.3使用不同的split逻辑，不能复用IID test冒充OOD。
+
+建立统一接口：
+
+```python
+make_random_split(...)
+make_scaffold_split(...)
+make_ring_family_ood(...)
+make_substituent_ood(...)
+make_external_reaction_test(...)
+```
+
+所有OOD函数必须返回：
+
+```python
+{
+    "train_idx": ...,
+    "val_idx": ...,
+    "test_idx": ...,
+    "metadata": ...
+}
+```
+
+并保存split manifest。
+
+---
+
+### 18. Scaffold OOD
+
+**优先级：P1**
+
+按照Bemis–Murcko scaffold或明确的DeepChem-style scaffold split。
+
+检查：
+
+```python
+assert scaffold_overlap(train, test) == 0
+```
+
+---
+
+### 19. Ring-family OOD
+
+**优先级：P1**
+
+使用：
+
+[
+leave\text{-}one\text{-}ring\text{-}family\text{-}out
+]
+
+例如：
+
+```text
+train: all except indole
+test: indole
+```
+
+依次对所有主要ring family执行。
+
+不能只做一次平均split。
+
+---
+
+### 20. Substituent OOD / Chemical exposure curve
+
+这部分先不做，先完成fig3要涉及的部分即可。
+### 21. External reaction set严格去重
+
+**优先级：P0/P1**
+
+真实去芳构化数据作为external test之前，必须检查：
+
+```text
+reactant
+product
+```
+
+是否在AromaBench训练数据中出现。
+
+至少检查：
+
+```text
+canonical SMILES
+InChIKey
+```
+
+如果完全相同结构出现在training：
+
+必须：
+
+* 从training移除，或
+* 将该reaction从external test排除。
+
+生成：
+
+```text
+external_overlap_report.csv
+```
+
+记录：
+
+```text
+reaction_id
+reactant_overlap
+product_overlap
+scaffold_overlap
+```
+
+---
+
+## 九、P2：Target标准化可以作为稳定性实验
+
+**优先级：P2**
+
+不是必须，但建议保留实现能力。
+
+三个任务的数值尺度明显不同。
+
+允许：
+
+```python
+target_scaling=True
+```
+
+每个fold只能用training target计算：
+
+[
+\mu_{train},\sigma_{train}
+]
+
+训练：
+
+[
+y'=
+\frac{y-\mu_{train}}{\sigma_{train}}
+]
+
+预测后反归一化，在原始单位计算：
+
+```text
+MAE
+RMSE
+R²
+```
+
+不得使用global target statistics。
+
+如果不提高性能，也不强制作为最终配置。
+
+---
+
+## 十、P1：重新设计最终训练流程
+
+最终模型选定后，不建议因为early stopping再把80%开发集永久拆成70%/10%。
+
+优先方案：
+
+在5-fold CV中记录：
+
+```text
+best_epoch_fold1
+...
+best_epoch_fold5
+```
+
+取：
+
+[
+E^*=
+median(best\ epoch)
+]
+
+然后：
+
+```text
+100% development set (80%)
+```
+
+训练：
+
+[
+E^*
+]
+
+epochs。
+
+最后只在：
+
+```text
+fixed 20% final test
+```
+
+评估。
+
+如果当前代码结构难以支持，可以保留train/early-stop validation，但必须明确这只是训练机制，不可根据final test调节。
+
+---
+
+# 十一、旧结果如何处理
+
+请不要删除或覆盖现有：
+
+```text
+stage1_traditional_ml
+stage1_gnn
+stage2_ring_conditioning
+stage3_mask_pretraining
+stage4_cross_arch
+```
+
+统一移动或复制到：
+
+```text
+results_legacy/
+```
+
+正式新结果使用：
+
+```text
+results_v2/
+```
+
+并在metadata中记录：
+
+```text
+git commit
+date
+split seed
+model seed
+feature mode
+hyperparameters
+dataset checksum
+number of train molecules
+number of val molecules
+number of test molecules
+number of ring samples
+```
+
+---
+
+# 十二、哪些旧数据可以继续使用，哪些必须重跑
+
+请按照以下原则执行。
+
+**可以直接保留作为pilot/reference：**
+
+```text
+原始HOMA/NICS/MBCO labels
+target ring annotation
+现有reaction data
+现有Stage1–4结果作为探索性结果
+```
+
+这些不需要删除。
+
+**正式论文主结果必须重跑：**
+
+```text
+Stage1 traditional ML
+Stage1 GNN
+Stage2 2×2 ablation
+Stage4 cross-architecture
+```
+
+原因：
+
+```text
+固定holdout改变
+模型seed定义改变
+超参数协议改变
+feature leakage control加入
+缺失seed bug修复
+```
+
+**Stage3：**
+
+如果继续作为主实验：
+
+```text
+必须使用Membership backbone后重跑
+```
+
+如果没有明显OOD收益：
+
+```text
+放SI即可
+```
+
+---
+
+# 十三、禁止出现的过度结论
+
+代码结果汇总和自动报告中，不要自动生成以下结论：
+
+```text
+"KRR completely fails"
+"DMPNN is intrinsically unsuitable"
+"Attention improves ring prediction"
+"Ring masking consistently improves all tasks"
+"Ring conditioning improves every architecture and descriptor"
+```
+
+只有正式实验支持时才能写。
+
+更稳妥的模板：
+
+```text
+Under the evaluated configuration, ...
+```
+
+```text
+Explicit target-ring membership reduced ...
+```
+
+```text
+The magnitude of improvement was architecture- and descriptor-dependent.
+```
+
+---
+
+# 十四、最终需要你输出给我的内容
+
+完成修改后，不要只告诉我“修改成功”。
+
+请按下面顺序返回：
+
+### A. Code audit report
+
+列出：
+
+```text
+原问题
+修改位置
+修改原因
+是否影响旧结果
+是否需要重跑
+```
+
+### B. Modified file list
+
+例如：
+
+```text
+tasks.py
+train_eval.py
+features.py
+graphs.py
+gnn_baseline.py
+ring_conditioning_ablation.py
+mask_pretraining.py
+cross_architecture.py
+...
+```
+
+每个文件说明具体改了什么。
+
+### C. New experimental protocol
+
+用流程图式文字明确：
+
+[
+Dataset
+\rightarrow
+Fixed\ 80/20\ group\ split
+]
+
+[
+80% dev
+\rightarrow
+5-fold\ CV
+\rightarrow
+model/hyperparameter\ selection
+]
+
+[
+Best\ configuration
+\rightarrow
+train\ on\ development
+\rightarrow
+20%\ final\ test
+]
+
+以及：
+
+[
+Independent\ OOD\ protocols
+]
+
+### D. Rerun checklist
+
+按照优先级告诉我：
+
+```text
+P0：必须马上重跑
+P1：正式论文必须跑
+P2：结果好再跑
+```
+
+### E. Expected output files
+
+明确列出新代码运行后应该生成：
+
+```text
+split manifests
+CV results
+hyperparameter results
+final test results
+run completeness report
+feature leakage control
+OOD results
+```
+
+### F. Validation tests
+
+至少执行并报告：
+
+```text
+同一分子不会跨split
+final test固定
+seed只改变模型随机性
+batch=1不报错
+所有实验组合完整
+scaler只fit training fold
+test从未用于model selection
+external reaction set无exact overlap
+```
+
+任何一个失败，都必须先停止后续正式实验。
+
+---
+
+# 十五、最重要的总原则
+
+此次修改的目标不是让R²变得更高，而是让每一个结果都能够回答一个明确的科学问题。
+
+最终Fig.3应该建立：
+
+[
+\boxed{
+High\ IID\ learnability
+}
+]
+
+↓
+
+[
+\boxed{
+Target\ ring\ identity\ provides\ useful
+chemical\ inductive\ bias
+}
+]
+
+↓
+
+[
+\boxed{
+The\ gain\ does\ not\ simply\ arise
+from\ a\ more\ complex\ readout
+}
+]
+
+↓
+
+[
+\boxed{
+The\ effect\ transfers\ across
+multiple\ GNN\ backbones
+}
+]
+
+而Fig.4进一步回答：
+
+[
+\boxed{
+High\ random\ split\ accuracy
+\neq
+chemical\ extrapolation
+}
+]
+
+整个代码修改、实验设计、数据划分和结果输出都必须围绕这条论文逻辑服务，而不是为了保留原有Stage结构而强行证明每个模块都有提升。
+
+在开始大规模重跑之前，请先完成**代码审计 → split重构 → bug修复 → 单元测试 → 小规模dry run**。只有所有验证通过后，才开始正式全量实验。

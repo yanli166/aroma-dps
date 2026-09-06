@@ -1,0 +1,7 @@
+{
+  "split_seed": 2026,
+  "n_total": 6820,
+  "n_dev": 5479,
+  "n_test": 1341,
+  "tag": "stage1_explicit_aromaticity_ablated"
+}

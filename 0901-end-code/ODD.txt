@@ -1,0 +1,2482 @@
+# Fig.4 — lunci10 External Chemical Generalization and Transferable Substituent Effects
+
+## 执行 AI 完整任务书 V2.0
+
+你正在接手一个芳香性定量预测项目。
+
+Fig.1–Fig.3 的主要模型开发已经完成。本阶段不要重新搜索最优 architecture，也不要继续堆叠 GNN 模块。
+
+Fig.4 的唯一核心科学问题是：
+
+**Does the target-ring-conditioned representation generalize to completely unseen chemical structures, and does it capture transferable substituent-induced aromaticity perturbations across diverse aromatic scaffolds?**
+
+本阶段主线固定为：
+
+**Internal IID performance**
+→ **internal scaffold/ring-family OOD**
+→ **strict zero-shot lunci10 external validation**
+→ **substituent-induced Δ aromaticity**
+→ **scaffold-bias decomposition**
+→ **Hammett/positional chemical validation**
+
+lunci6 和 lunci78 不再作为本阶段主要数据集。
+
+除非现有代码依赖它们才能运行，否则不要继续围绕 lunci6/lunci78 开发、选模型或组织 Fig.4。
+
+---
+
+# 1. lunci10 的正式定位
+
+lunci10 是本阶段最重要的 external benchmark。
+
+当前已知：
+
+* 总记录：1389
+* 唯一分子：1389
+* `ring_name`：38 类
+* `sub_name`：30 类
+* `sub_type`：2 类
+
+  * C：1029
+  * N：360
+* 数据从未进入 Stage-I 芳香性预训练
+* 数据从未进入正式监督训练
+
+因此：
+
+**lunci10 必须首先作为 strict zero-shot external test。**
+
+禁止使用 lunci10：
+
+* 选择 architecture
+* 选择 backbone
+* 选择 feature mode
+* 选择 checkpoint
+* 选择 epoch
+* early stopping
+* hyperparameter optimization
+* 调整 Hammett exclusion rule
+* 选择最佳 anchor
+* 选择最优 descriptor-specific model
+* 根据测试结果修改模型
+
+Fig.3 已冻结的模型直接用于 lunci10。
+
+如果历史代码曾利用 lunci10 调过参数，必须在 audit 中标记。
+
+历史 exploratory result 可以保留，但正式 Fig.4 必须重新采用：
+
+**model frozen before lunci10 evaluation**
+
+的协议。
+
+---
+
+# 2. 首先纠正一个重要概念：lunci10 不是 38×30 完整二维矩阵
+
+38 scaffolds × 30 substituents = 1140 possible simple scaffold–substituent combinations。
+
+但实际：
+
+1389 unique molecules。
+
+因此至少有一些：
+
+`ring_name × sub_name`
+
+组合对应多个不同分子。
+
+可能原因包括但不限于：
+
+* ring_pos 不同
+* substitution site 不同
+* fused-ring target 不同
+* orientation / regioisomer 不同
+* sub_type 不同
+* target ring 不同
+* 其他结构上下文不同
+
+不要假设原因。
+
+必须从真实数据确定。
+
+因此 Fig.4 不再称：
+
+“40×40 matrix benchmark”
+
+也不要简单称：
+
+“38×30 matrix”。
+
+建议统一称：
+
+**lunci10 scaffold–substituent external benchmark**
+
+或者：
+
+**scaffold–substituent–position chemical extrapolation benchmark**
+
+如果审计最终证明第三维确实主要来自 position，则优先使用后者。
+
+---
+
+# 3. Phase 0：Repository 和数据审计
+
+第一次执行时不要启动大规模 GPU 训练。
+
+先完成：
+
+`fig4_v2_audit_report.md`
+
+和：
+
+`fig4_v2_audit_report.json`
+
+---
+
+## 3.1 自动寻找关键资源
+
+检查 repository 并报告：
+
+### 数据
+
+* Stage-I / 主芳香性训练数据
+* lunci10
+* 现有 scaffold OOD 数据/拆分
+* ring-family OOD 数据/拆分
+* Hammett lookup
+* anchor lookup
+* substituent metadata
+* target-ring metadata
+
+### 模型
+
+找到：
+
+* final RC-GNN
+* Base GNN
+* HOMA checkpoint
+* NICS checkpoint
+* MCBO/MBCO checkpoint
+* Stage-I pretrained encoder，如存在
+
+### 训练协议
+
+确认：
+
+* split seed
+* model seeds
+* E* protocol
+* feature_mode
+* ring membership encoding
+* learnable projection 是否已经正式启用
+
+---
+
+# 4. 必须首先重新统计 lunci10
+
+不要直接相信人工摘要中的每个数量。
+
+从原始 lunci10 文件重新生成：
+
+`lunci10_manifest.csv`
+
+至少包含：
+
+* sample_id
+* canonical_smiles
+* ring_name
+* Ring_ID，如有
+* ring_type，如有
+* ring_pos
+* target_ring_id
+* target_ring_atoms
+* sub_name
+* sub_type
+* substituent attachment atom，如有
+* fused/non_fused
+* ring_size
+* heteroatom composition
+* HOMA
+* NICS
+* MCBO/MBCO
+* source
+
+然后输出真实统计：
+
+### 总体
+
+* N records
+* N unique canonical SMILES
+* N unique ring_name
+* N unique sub_name
+* N unique ring_pos
+* N unique sub_type
+* N unique ring_name × sub_name
+* N unique ring_name × ring_pos × sub_name
+
+---
+
+## 4.1 特别检查为什么 1389 > 38×30
+
+生成：
+
+`duplicate_scaffold_substituent_contexts.csv`
+
+列出所有：
+
+`ring_name + sub_name`
+
+出现大于一次的情况。
+
+说明差异来自什么：
+
+* ring_pos？
+* target ring？
+* regioisomer？
+* attachment site？
+* 其他？
+
+这一点是后续 pair construction 和 split 的基础。
+
+不得在不知道这一点的情况下直接训练 pairwise model。
+
+---
+
+# 5. 数据一致性检查
+
+必须检查：
+
+### canonical SMILES
+
+* 是否有重复
+* 是否有 salt
+* 是否有 stereochemistry inconsistencies
+* canonicalization 方法是否统一
+
+### label
+
+三个任务分别检查：
+
+* missing
+* NaN
+* inf
+* extreme values
+* duplicates with inconsistent labels
+
+### target ring
+
+检查：
+
+* target-ring atoms 是否有效
+* 是否存在同分子多个 target ring
+* ring_name 是否与 target ring 一致
+
+### substituent
+
+检查：
+
+* sub_name 是否统一
+* 同义名称是否重复
+* 是否存在大小写差异
+* F/Cl/OMe 等 anchor 名称是否一致
+
+---
+
+# 6. 必须做 exact external overlap audit
+
+虽然已知 lunci10 没进入 Stage-I，但必须代码确认。
+
+与正式训练数据比较：
+
+### Level 1
+
+exact canonical SMILES overlap
+
+### Level 2
+
+InChIKey overlap，如可用
+
+### Level 3
+
+Murcko scaffold overlap
+
+### Level 4
+
+ring-family overlap
+
+### Level 5
+
+substituent overlap
+
+输出：
+
+`lunci10_overlap_audit.csv`
+
+每个 molecule 标记：
+
+* exact_molecule_seen
+* scaffold_seen
+* ring_family_seen
+* substituent_seen
+
+非常重要：
+
+lunci10 可以同时满足：
+
+molecule unseen
+
+但：
+
+scaffold seen
+
+或：
+
+substituent seen
+
+这不是泄漏。
+
+相反，这为后面分析不同 novelty level 提供基础。
+
+真正 strict external 的必要条件是：
+
+**exact molecule unseen**
+
+---
+
+# 7. Fig.4 的正式实验结构
+
+Fig.4 推荐最终包含五部分：
+
+### Fig.4a
+
+Internal → Chemical OOD → lunci10 external generalization
+
+### Fig.4b
+
+lunci10 scaffold/substituent novelty decomposition
+
+### Fig.4c
+
+Pairwise substituent-induced Δ aromaticity
+
+### Fig.4d
+
+Scaffold-level absolute calibration bias vs relative transferability
+
+### Fig.4e
+
+Hammett and positional chemical validation
+
+所有其他实验优先放 SI。
+
+---
+
+# 8. Fig.4a — Generalization hierarchy
+
+首先整理已有：
+
+* IID
+* scaffold OOD
+* ring-family OOD
+
+然后增加：
+
+* lunci10 strict external
+
+形成：
+
+IID
+→ Scaffold OOD
+→ Ring-family OOD
+→ lunci10 external
+
+不要为了形成漂亮的单调曲线而修改 split。
+
+这些数据集本质不同，OOD difficulty 不一定严格单调。
+
+---
+
+## 8.1 正文模型
+
+正文最多比较：
+
+1. best conventional baseline，如果 Fig.3 已经冻结
+2. Base GNN
+3. final RC-GNN
+
+不再重新比较：
+
+M1–M8 × 3 tasks。
+
+---
+
+## 8.2 指标
+
+三个任务分别计算：
+
+* MAE
+* RMSE
+* R²
+
+主指标：
+
+MAE
+
+同时定义：
+
+OOD penalty = MAE_OOD / MAE_IID
+
+以及：
+
+relative degradation =
+(MAE_OOD - MAE_IID) / MAE_IID
+
+---
+
+## 8.3 lunci10 必须完全 zero-shot
+
+对每个正式 frozen checkpoint：
+
+直接预测 lunci10。
+
+不训练。
+
+不 fine-tune。
+
+不 early-stop。
+
+不重新 fit model。
+
+如果 target normalization / scaler 是训练阶段建立的：
+
+只能加载训练阶段保存的 scaler。
+
+绝不能：
+
+fit scaler on lunci10。
+
+---
+
+## 8.4 输出
+
+`fig4a_generalization_summary.csv`
+
+包含：
+
+task
+model
+dataset
+split_type
+model_seed
+N
+MAE
+RMSE
+R2
+OOD_penalty
+relative_degradation
+
+保存：
+
+`lunci10_absolute_predictions.csv`
+
+至少包含：
+
+sample_id
+smiles
+ring_name
+ring_pos
+sub_name
+sub_type
+true_value
+pred_value
+error
+abs_error
+task
+model
+seed
+
+---
+
+# 9. Fig.4b — lunci10 novelty decomposition
+
+不要再做“随机 8 行 × 8 列 double OOD”的主分析。
+
+因为整个 lunci10 本身已经是 external。
+
+这里应该问：
+
+**lunci10 中哪些类型的 novelty 导致模型性能下降？**
+
+根据 overlap audit，将 lunci10 molecule 分成：
+
+### Category A
+
+Seen scaffold + seen substituent
+
+但是 molecule unseen。
+
+这是：
+
+**compositional novelty**
+
+---
+
+### Category B
+
+Unseen scaffold + seen substituent
+
+这是：
+
+**scaffold extrapolation**
+
+---
+
+### Category C
+
+Seen scaffold + unseen substituent
+
+这是：
+
+**substituent extrapolation**
+
+---
+
+### Category D
+
+Unseen scaffold + unseen substituent
+
+这是最严格的：
+
+**double novelty**
+
+---
+
+如果某一类别 N 太少：
+
+不得强行比较。
+
+报告实际 N。
+
+---
+
+# 10. novelty 不仅按 scaffold/substituent 二元划分
+
+进一步计算连续 novelty。
+
+对于每个 lunci10 molecule：
+
+找到 training set 最近邻。
+
+使用统一 Morgan fingerprint。
+
+保存：
+
+nearest_train_tanimoto
+
+并计算：
+
+* similarity < 0.2
+* similarity < 0.3
+* similarity < 0.4
+* similarity bins
+
+例如：
+
+0–0.2
+0.2–0.4
+0.4–0.6
+0.6–0.8
+0.8–1.0
+
+分析：
+
+similarity ↓
+
+是否伴随：
+
+absolute error ↑
+
+但不要预设结果。
+
+---
+
+# 11. Fig.4b 推荐输出
+
+### Panel 1
+
+38 ring families × error distribution
+
+不要强制 heatmap，如果每类 N 不同。
+
+可以使用：
+
+sorted dot/bar distribution。
+
+### Panel 2
+
+30 substituents × error distribution。
+
+### Panel 3
+
+novelty category：
+
+A/B/C/D
+
+的 MAE。
+
+### Panel 4
+
+nearest-neighbor similarity vs absolute error。
+
+主图实际可择其中最清晰的 2–3 个。
+
+其余放 SI。
+
+---
+
+# 12. Pairwise Δ aromaticity：这是 Fig.4 的核心化学分析
+
+对于同一 aromatic scaffold/environment：
+
+改变 substituent 后：
+
+目标环芳香性变化多少？
+
+定义：
+
+ΔA_ij = A_i - A_j
+
+其中：
+
+A ∈ {
+HOMA,
+NICS,
+MCBO
+}
+
+---
+
+# 13. Pair 构建首先必须定义“可比环境”
+
+不能简单按：
+
+ring_name 相同
+
+就全部两两配对。
+
+因为同一 ring_name 可能有：
+
+* 不同 ring_pos
+* 不同 target ring
+* 不同 substitution site
+* 不同 fused context
+
+因此首先从数据确定：
+
+**chemical context key**
+
+优先考虑：
+
+context_key =
+(
+ring_name,
+ring_pos,
+target_ring_id/context,
+sub_type requirement if chemically necessary
+)
+
+实际字段根据数据确定。
+
+核心原则：
+
+pair 中两个 molecule 除 substituent 外，应尽可能保持同一 aromatic environment。
+
+---
+
+# 14. Pair construction audit
+
+构建前输出：
+
+`pair_context_audit.csv`
+
+报告：
+
+每个 context：
+
+* N molecules
+* N substituents
+* possible pair number
+* ring_name
+* ring_pos
+* sub_type composition
+
+context 中少于 2 个 substituent：
+
+不能构成 pair。
+
+---
+
+# 15. Pair orientation 必须 deterministic
+
+为了避免：
+
+Δ sign
+
+混乱，采用固定规则。
+
+例如：
+
+按 standardized sub_name 排序。
+
+如果：
+
+sub_i < sub_j
+
+则：
+
+ΔA_ij = A_i - A_j
+
+只保存 canonical pair 一次。
+
+不得同时保存：
+
+i,j
+
+和
+
+j,i
+
+作为两个独立测试点。
+
+---
+
+# 16. 保存正式 pair dataset
+
+输出：
+
+`lunci10_pair_manifest.csv`
+
+字段至少：
+
+pair_id
+context_id
+sample_i
+sample_j
+ring_name
+ring_pos
+sub_i
+sub_j
+sub_type_i
+sub_type_j
+HOMA_i
+HOMA_j
+delta_HOMA
+NICS_i
+NICS_j
+delta_NICS
+MCBO_i
+MCBO_j
+delta_MCBO
+
+---
+
+# 17. lunci10 pairwise 主分析必须优先 zero-shot
+
+这是非常重要的新规则。
+
+由于 lunci10 是 strict external dataset：
+
+正式主结果首先问：
+
+**冻结的绝对芳香性模型，是否能够在从未见过的外部结构上恢复 substituent-induced ΔA？**
+
+因此使用：
+
+Ahat_i
+Ahat_j
+
+得到：
+
+ΔAhat_ij =
+Ahat_i - Ahat_j
+
+这就是：
+
+**Zero-shot subtraction model**
+
+它应该成为 lunci10 pairwise analysis 的第一个、也是最严格结果。
+
+---
+
+# 18. 不允许直接在全部 lunci10 上训练 Siamese 再称 external test
+
+如果 Siamese model 使用 lunci10 label 训练：
+
+它不再是 strict external validation。
+
+因此 Pairwise 部分必须区分两种 protocol。
+
+---
+
+## Protocol I：Strict external zero-shot
+
+训练：
+
+只使用原有 Stage-I / internal dataset。
+
+测试：
+
+lunci10。
+
+如果 internal dataset 可以构建 matched substituent pairs：
+
+可以训练：
+
+* Δ fingerprint
+* Siamese / Paired GNN
+
+然后直接外部测试 lunci10 pairs。
+
+这是最佳情况。
+
+---
+
+## Protocol II：lunci10 controlled adaptation
+
+只有当 internal dataset 无法建立可靠 pair dataset 时：
+
+才允许把 lunci10 分成 train/test。
+
+但必须明确写成：
+
+**adaptation / within-lunci10 controlled extrapolation**
+
+不能称：
+
+external zero-shot。
+
+Protocol II 属于 secondary analysis。
+
+---
+
+# 19. 执行 AI 必须先检查 internal dataset 能否构建 pair
+
+检查 Stage-I/internal supervised dataset 是否有：
+
+* scaffold/Ring_ID
+* ring_pos
+* substituent identity
+* matched substituent series
+
+如果能够：
+
+建立：
+
+`internal_pair_manifest.csv`
+
+训练：
+
+### Baseline A
+
+absolute subtraction
+
+### Baseline B
+
+difference fingerprint
+
+### Main
+
+Siamese / Paired RC-GNN
+
+然后：
+
+**只在 internal train/CV 选择模型**
+
+最终一次性测试：
+
+lunci10 pairs。
+
+---
+
+# 20. 如果 internal dataset 无法构建 pair
+
+不要伪造 substituent labels。
+
+此时正式 Fig.4c 主结果采用：
+
+frozen absolute RC-GNN
+→ subtraction
+→ external Δ prediction
+
+另外可以在 lunci10 内做一个独立 secondary experiment：
+
+train some contexts
+
+test unseen contexts
+
+用于证明 direct pairwise learning potential。
+
+但必须与 zero-shot result 分开。
+
+---
+
+# 21. Pairwise metrics
+
+对每个 descriptor：
+
+* MAE
+* RMSE
+* R²
+* Pearson r
+* Spearman ρ
+* sign accuracy
+
+其中：
+
+sign accuracy =
+fraction[
+sign(ΔA_pred)
+=============
+
+sign(ΔA_true)
+]
+
+这是重要化学指标。
+
+---
+
+# 22. Micro / Macro 必须同时报告
+
+### Micro
+
+所有 pairs 合并计算。
+
+### Macro-context
+
+每个 context 单独计算 metric，再平均。
+
+### Macro-ring
+
+每个 ring_name 单独计算，再平均。
+
+原因：
+
+不同 ring_name/context pair 数很可能高度不平衡。
+
+只报告 micro 会被大量样本 scaffold 支配。
+
+---
+
+# 23. NICS 的符号不要擅自翻转
+
+Pairwise prediction 中：
+
+如果原始目标为 NICS(1)zz：
+
+先保持：
+
+ΔNICS = NICS_i - NICS_j
+
+用于模型数值预测。
+
+不要为了“芳香性越大越好”而自动反号。
+
+如果后续需要统一 aromaticity-enhancement direction：
+
+另定义解释变量，例如：
+
+ΔNICS_arom
+
+但必须明确公式。
+
+禁止不同脚本使用不同 sign convention。
+
+---
+
+# 24. Fig.4d — Scaffold-level bias decomposition
+
+对于 lunci10 每个 context / scaffold：
+
+计算 frozen absolute model 的：
+
+bias_g =
+mean(pred_A - true_A)
+
+同时计算：
+
+absolute MAE_g
+
+以及：
+
+pairwise Δ MAE_g
+
+核心问题：
+
+**模型是否可能错误估计一个新 scaffold 的 absolute aromaticity baseline，却仍然正确捕捉该 scaffold 内不同 substituent 之间的 relative changes？**
+
+---
+
+# 25. 数学解释
+
+如果：
+
+pred_A_i =
+true_A_i + b_g + epsilon_i
+
+pred_A_j =
+true_A_j + b_g + epsilon_j
+
+那么：
+
+pred_A_i - pred_A_j
+
+=
+true_A_i - true_A_j
++
+epsilon_i - epsilon_j
+
+共同 scaffold bias：
+
+b_g
+
+被抵消。
+
+这为：
+
+relative substituent effect
+
+可能比：
+
+absolute aromaticity
+
+更 transferable 提供解释。
+
+---
+
+# 26. 必须计算
+
+每个 context/scaffold：
+
+* N molecules
+* N pairs
+* signed bias
+* |bias|
+* absolute MAE
+* residual SD after removing group bias
+* delta MAE
+* delta Spearman
+* delta sign accuracy
+
+分析：
+
+|bias| vs absolute MAE
+
+|bias| vs delta MAE
+
+如果数据支持，可以形成：
+
+**Absolute aromaticity calibration is scaffold sensitive, whereas relative substituent perturbations are more robust to scaffold-level offsets.**
+
+如果不支持：
+
+如实报告。
+
+---
+
+# 27. 禁止 oracle correction
+
+test label 计算的：
+
+bias_g
+
+只能用于：
+
+diagnostic explanation。
+
+不得把：
+
+pred_A - bias_g
+
+作为正式 corrected external performance。
+
+如确实展示：
+
+必须写：
+
+“oracle diagnostic only”
+
+不能当模型结果。
+
+---
+
+# 28. Fig.4e — Hammett chemical validation
+
+现有：
+
+SMARTS → σ_meta, σ_para
+
+lookup 源自：
+
+Hansch 1991。
+
+必须使用现有 lookup。
+
+禁止根据 lunci10 correlation 修改 σ。
+
+---
+
+# 29. Hammett 匹配
+
+对于每个 lunci10 molecule：
+
+尝试确定：
+
+* substituent identity
+* sigma_m
+* sigma_p
+* ortho/meta/para position
+
+---
+
+## meta
+
+使用：
+
+σ_m
+
+## para
+
+使用：
+
+σ_p
+
+## ortho
+
+不存在通用 σ_o。
+
+不要使用 σ_m 或 σ_p 代替 ortho。
+
+ortho 单独分析。
+
+---
+
+# 30. Hammett 分析不要只看绝对 A
+
+主要分析：
+
+substituent-induced ΔA。
+
+优先选择一个 preregistered anchor 定义：
+
+ΔA_sub =
+A(substituent)
+--------------
+
+A(anchor)
+
+Anchor：
+
+Primary = F
+
+Backup robustness：
+
+Cl
+OMe
+
+但是：
+
+主分析不要根据最后结果选择最好的 anchor。
+
+---
+
+# 31. Anchor availability
+
+由于不同 context 中不一定都有 F：
+
+首先统计：
+
+每个 anchor 可以覆盖多少 context。
+
+输出：
+
+`anchor_coverage.csv`
+
+包含：
+
+anchor
+N_context
+N_pairs
+ring coverage
+position coverage
+
+---
+
+# 32. 主 Anchor protocol
+
+如果 F 覆盖充分：
+
+主分析固定 F。
+
+对于同一个 context：
+
+ΔA_sub =
+A(sub)
+------
+
+A(F)
+
+predicted：
+
+ΔAhat_sub =
+Ahat(sub)
+---------
+
+Ahat(F)
+
+---
+
+# 33. Anchor robustness
+
+重复：
+
+Cl
+OMe
+
+最后比较：
+
+* F
+* Cl
+* OMe
+* 3-anchor average
+* all-pairs
+
+但 anchor robustness 优先进入 SI。
+
+如果 anchor coverage 太低：
+
+不要强行使用 F 主导 Fig.4。
+
+此时 all-pairs 应成为主结果。
+
+---
+
+# 34. Hammett 相关性
+
+分别对：
+
+true ΔHOMA
+predicted ΔHOMA
+
+true ΔNICS
+predicted ΔNICS
+
+true ΔMCBO
+predicted ΔMCBO
+
+分析：
+
+σm / σp
+
+报告：
+
+* Spearman ρ
+* Pearson r
+* slope，如线性回归合理
+* N
+* confidence interval
+
+Spearman 优先。
+
+原因：
+
+经典 electronic effect 不保证对所有 heterogeneous scaffold 呈统一严格线性。
+
+---
+
+# 35. 不要把所有 38 scaffold 混在一起就结束
+
+Hammett relationship 很可能 scaffold-dependent。
+
+因此至少做：
+
+### pooled analysis
+
+所有满足条件的数据。
+
+### within-scaffold/context analysis
+
+每个 context 单独计算：
+
+ρ_context
+
+然后报告：
+
+distribution of rho
+
+以及：
+
+macro rho trend。
+
+这是非常重要的。
+
+否则：
+
+不同 scaffold baseline
+
+可能产生 Simpson's paradox。
+
+---
+
+# 36. 位置效应分析
+
+利用：
+
+ortho/meta/para
+
+测试：
+
+同一 substituent 在不同位置是否产生不同 aromaticity perturbation。
+
+如果存在足够 matched structures：
+
+比较：
+
+ΔA_ortho
+ΔA_meta
+ΔA_para
+
+但只能在：
+
+相同 scaffold
+相同 substituent
+
+条件下比较。
+
+不要混合不同 scaffold 后声称“para stronger than meta”。
+
+---
+
+# 37. sub_type C / N 需要单独检查
+
+lunci10：
+
+C-connected = 1029
+N-connected = 360
+
+这是一个重要结构维度。
+
+需要检查：
+
+pairing 时是否应该允许：
+
+C-linked substituent
+
+与：
+
+N-linked substituent
+
+直接比较。
+
+默认原则：
+
+如果连接原子改变了 aromatic framework 的化学定义：
+
+不要组成同一 matched pair。
+
+因此执行 AI 必须根据真实结构和现有 dataset definition 判断。
+
+至少输出：
+
+C-only
+N-only
+
+的 separate performance。
+
+然后再决定 pooled 是否合理。
+
+---
+
+# 38. M1–M8 重新定位
+
+不要再组织：
+
+8 methods × 3 tasks leaderboard。
+
+---
+
+## 正文可能保留
+
+### M1
+
+Hammett σ embedding
+
+用于：
+
+electronic-effect-informed representation / validation
+
+### M2
+
+electronic monotonicity constraint
+
+用于：
+
+chemical consistency
+
+### M6
+
+ortho/meta/para position encoding
+
+用于：
+
+position-dependent substituent effects
+
+### M7
+
+P_total = P_ring + ΔP_substituent
+
+作为：
+
+substituent perturbation conceptual framework
+
+---
+
+## Secondary / SI
+
+### M5
+
+substituent replacement self-supervised pretraining
+
+用于：
+
+low-data transfer
+
+### M3
+
+hierarchical cross-attention
+
+### M4
+
+dual conjugation/inductive channels
+
+### M8
+
+multiscale pooling
+
+M3/M4/M8 不再成为 Fig.4 主线。
+
+---
+
+# 39. M1/M2/M6/M7 不得使用 lunci10 选超参数
+
+如果这些模型以前曾针对 lunci10 调参：
+
+旧结果仅作为 exploratory。
+
+正式结果必须：
+
+在 internal development set 决策。
+
+然后冻结。
+
+最后：
+
+一次性 evaluate lunci10。
+
+---
+
+# 40. Monotonicity constraint 的正确评价
+
+M2 不能只比较 MAE。
+
+至少比较：
+
+* MAE
+* Spearman rho
+* sign consistency
+* monotonicity violation rate
+
+定义：
+
+对于两个 substituents a,b：
+
+如果 Hammett electronic ordering 给出：
+
+σ_a > σ_b
+
+并且该 descriptor 在该 matched chemical context 的方向关系预先定义，
+
+则检查 prediction ordering 是否一致。
+
+---
+
+# 41. 不要未经验证就假设 Hammett 与三个 aromaticity descriptor 同方向
+
+这是重要原则。
+
+执行 AI 必须先使用：
+
+TRUE lunci10 labels
+
+分析：
+
+σ → ΔHOMA
+σ → ΔNICS
+σ → ΔMCBO
+
+实际关系。
+
+只有真实数据本身存在稳定 ordering：
+
+才可以对 prediction 加相应 monotonicity constraint。
+
+禁止先假定：
+
+electron withdrawing substituent
+
+必然让 HOMA/NICS/MCBO 单调朝某方向变化。
+
+---
+
+# 42. 这一步属于 chemical discovery，不是 label leakage
+
+Hammett vs true lunci10 ΔA 可以作为：
+
+external dataset chemical characterization。
+
+但是：
+
+如果这一步决定了模型训练中的 monotonicity direction，
+
+则不能再使用同一 lunci10 作为 strict untouched test。
+
+因此正式协议建议：
+
+### 主 external prediction
+
+完全 frozen，不使用 lunci10 Hammett trend 调训练。
+
+### monotonicity model
+
+如果需要方向约束：
+
+方向必须来自：
+
+internal training data
+
+或先验化学定义。
+
+不能从完整 lunci10 test labels 学出来。
+
+---
+
+# 43. Pretraining 对照
+
+只有完成主结果后再进行。
+
+比较：
+
+random-init Siamese
+
+vs
+
+Stage-I-pretrained Siamese
+
+如果 internal pair dataset 存在：
+
+用：
+
+100%
+50%
+20%
+10%
+
+internal pair training fraction。
+
+最终都测试：
+
+同一 lunci10 pair set。
+
+这是最干净的 low-data external transfer experiment。
+
+---
+
+# 44. 如果只有 lunci10 能构建 pair
+
+则 learning curve 改成：
+
+within-lunci10 adaptation
+
+并清楚标记：
+
+NOT strict external。
+
+Split 必须按：
+
+context/scaffold
+
+而不是 random pair。
+
+---
+
+# 45. OOD difficulty analysis
+
+每个 lunci10 molecule 计算：
+
+nearest training similarity。
+
+另外计算：
+
+* ring family frequency in training
+* substituent frequency in training
+* scaffold seen/unseen
+* substituent seen/unseen
+* fused/nonfused
+* heteroatom count/composition
+* ring size
+* sub_type
+* target range
+
+建模/分析：
+
+abs_error ~
+
+nearest_similarity
++
+scaffold_seen
++
+substituent_seen
++
+ring_family
++
+fused
++
+sub_type
+
+主要做 descriptive analysis。
+
+不要过度解释 causal relationship。
+
+---
+
+# 46. Ring-family error analysis
+
+38 个 ring_name 数量不均衡。
+
+因此：
+
+每个 ring_name 输出：
+
+* N
+* MAE
+* median AE
+* RMSE
+* signed bias
+* nearest training similarity
+* pairwise Δ MAE，如可用
+
+小 N ring family 不要与 N=60 ring family 直接等权讨论单个 point estimate。
+
+最好同时展示 uncertainty。
+
+---
+
+# 47. Substituent error analysis
+
+30 个 substituent 同样输出：
+
+* N
+* absolute MAE
+* signed bias
+* pairwise Δ MAE
+* Hammett available yes/no
+* sigma_m
+* sigma_p
+* mean nearest similarity
+
+寻找：
+
+模型在哪些 electronic / steric substituents 上更困难。
+
+但不要看到结果后重新定义 exclusion。
+
+---
+
+# 48. 关于目前人工统计存在轻微不一致
+
+执行 AI 必须注意：
+
+目前用户给出的 scaffold count summary 可能存在手工整理误差。
+
+因此：
+
+禁止把：
+
+60
+43
+30
+22
+11
+
+这些数量写死到代码。
+
+一切统计必须从真实 lunci10 文件生成。
+
+正式论文采用程序生成的：
+
+`dataset_statistics.json`
+
+作为唯一来源。
+
+---
+
+# 49. 统一随机种子
+
+继续沿用项目已有：
+
+SPLIT_SEED
+
+以及正式 model seeds。
+
+如果历史已有：
+
+5 model seeds
+
+必须沿用。
+
+不要为了 Fig.4 创建另一套 seed，除非技术上必要。
+
+所有 seed 写入：
+
+`fig4_config.yaml`
+
+---
+
+# 50. 结果统计
+
+主结果：
+
+mean ± SD
+
+如果是 5 model seeds。
+
+External lunci10 数据固定。
+
+因此不同 seed 反映：
+
+training stochasticity。
+
+---
+
+# 51. Bootstrap
+
+对于 lunci10：
+
+普通 molecule-level bootstrap 可能低估相关性。
+
+优先：
+
+### absolute performance
+
+按 context 或 scaffold cluster bootstrap。
+
+### pairwise
+
+按 context bootstrap。
+
+不要把高度相关的同 scaffold pairs 当完全独立 observations。
+
+输出：
+
+95% CI。
+
+如果 bootstrap 实现成本较高：
+
+优先完成正式 mean±SD。
+
+之后再做 bootstrap。
+
+---
+
+# 52. 建议代码目录
+
+不要复制已有模型。
+
+优先 import 原项目代码。
+
+新增：
+
+fig4_lunci10/
+
+```
+configs/
+    fig4_lunci10.yaml
+
+audit/
+    audit_lunci10.py
+    audit_overlap.py
+    audit_contexts.py
+
+data/
+    build_manifest.py
+    build_pairs.py
+
+evaluation/
+    run_external_absolute.py
+    run_external_delta.py
+
+analysis/
+    novelty_analysis.py
+    scaffold_bias.py
+    hammett_analysis.py
+    position_analysis.py
+    anchor_analysis.py
+    ood_difficulty.py
+
+training/
+    train_internal_pair_models.py
+    train_monotonicity_control.py
+    train_pretraining_control.py
+
+reporting/
+    rebuild_fig4_summary.py
+    make_fig4_panels.py
+    generate_fig4_report.py
+```
+
+不要破坏 Fig.3 代码。
+
+---
+
+# 53. 正式输出目录
+
+统一：
+
+results/fig4_lunci10_final/
+
+包含：
+
+00_audit/
+01_external_absolute/
+02_novelty/
+03_pairwise_delta/
+04_bias/
+05_hammett/
+06_position/
+si_anchor/
+si_pretraining/
+si_difficulty/
+figures/
+tables/
+logs/
+configs/
+
+---
+
+# 54. Run registry
+
+所有训练和测试统一记录：
+
+`run_registry.csv`
+
+至少：
+
+run_id
+timestamp
+git_commit
+task
+model
+checkpoint
+dataset
+protocol
+split_seed
+model_seed
+pretrained
+feature_mode
+train_N
+test_N
+MAE
+RMSE
+R2
+status
+notes
+
+failed runs 不得删除。
+
+---
+
+# 55. 必须生成的核心结果文件
+
+### Audit
+
+`lunci10_manifest.csv`
+
+`lunci10_statistics.json`
+
+`lunci10_overlap_audit.csv`
+
+`duplicate_scaffold_substituent_contexts.csv`
+
+`pair_context_audit.csv`
+
+---
+
+### Absolute external
+
+`lunci10_absolute_predictions.csv`
+
+`fig4a_generalization_summary.csv`
+
+---
+
+### Novelty
+
+`novelty_category_summary.csv`
+
+`nearest_neighbor_analysis.csv`
+
+`ring_family_error.csv`
+
+`substituent_error.csv`
+
+---
+
+### Pairwise
+
+`lunci10_pair_manifest.csv`
+
+`lunci10_pair_predictions.csv`
+
+`fig4c_pairwise_summary.csv`
+
+---
+
+### Bias
+
+`scaffold_context_bias.csv`
+
+---
+
+### Hammett
+
+`hammett_matches.csv`
+
+`hammett_context_summary.csv`
+
+`hammett_global_summary.csv`
+
+---
+
+### Position
+
+`position_effect_summary.csv`
+
+---
+
+### Final
+
+`fig4_summary.csv`
+
+`FIG4_RESULTS_REPORT.md`
+
+---
+
+# 56. Fig.4 最终绘图建议
+
+正式绘图只能在结果完成以后确定。
+
+先不要为了画面好看选择数据。
+
+---
+
+## Fig.4a
+
+Generalization performance：
+
+IID
+Scaffold OOD
+Ring-family OOD
+lunci10 External
+
+比较：
+
+Base
+vs
+RC-GNN
+
+三个 descriptors。
+
+---
+
+## Fig.4b
+
+lunci10 chemical novelty landscape。
+
+候选：
+
+scaffold/substituent novelty category
+
+*
+
+nearest similarity vs error
+
+*
+
+代表性的 ring-family distribution。
+
+不要强行画 38×30 heatmap。
+
+---
+
+## Fig.4c
+
+True ΔA vs predicted ΔA。
+
+三个 descriptor。
+
+同时展示：
+
+sign accuracy
+Spearman
+MAE。
+
+如果 direct Siamese external model 存在：
+
+比较：
+
+subtraction
+ΔFP
+Siamese
+
+否则：
+
+只展示 zero-shot subtraction，
+
+不要为了凑三个模型破坏 external protocol。
+
+---
+
+## Fig.4d
+
+Absolute scaffold bias
+
+vs
+
+pairwise Δ robustness。
+
+这是机制解释 panel。
+
+---
+
+## Fig.4e
+
+Hammett / position dependence。
+
+优先：
+
+σm / σp
+vs
+ΔA
+
+true + prediction。
+
+可增加：
+
+context-wise Spearman distribution。
+
+---
+
+# 57. Main-text 与 SI 分工
+
+正文只回答：
+
+1. lunci10 是否 external 泛化？
+2. 哪种 chemical novelty 最困难？
+3. relative substituent effects 是否比 absolute values 更 transferable？
+4. scaffold bias 是否解释 absolute-vs-relative 差异？
+5. model predictions 是否恢复 chemical electronic/position trends？
+
+---
+
+SI：
+
+* 38 ring family 全结果
+* 30 substituent 全结果
+* anchor robustness
+* low-data pretraining
+* M3/M4/M8
+* detailed OOD difficulty
+* alternative fingerprints
+* full seed tables
+* all scatter plots
+* all context-wise Hammett results
+
+---
+
+# 58. RED FLAGS
+
+以下任何情况必须停止正式汇总并报告。
+
+### RED FLAG 1
+
+lunci10 exact molecule 出现在训练数据。
+
+### RED FLAG 2
+
+使用 lunci10 label 重新 fit normalization。
+
+### RED FLAG 3
+
+使用 lunci10 选择 checkpoint。
+
+### RED FLAG 4
+
+使用 lunci10 调 M1–M8 hyperparameters。
+
+### RED FLAG 5
+
+pair 中两个 molecule chemical context 实际不一致。
+
+### RED FLAG 6
+
+ring_pos 被忽略导致不同 regioisomer 误配。
+
+### RED FLAG 7
+
+pair orientation 导致 Δ sign 不一致。
+
+### RED FLAG 8
+
+NICS sign convention 在脚本间改变。
+
+### RED FLAG 9
+
+test scaffold bias 被用于正式 prediction correction。
+
+### RED FLAG 10
+
+不同模型使用不同 lunci10 subset。
+
+### RED FLAG 11
+
+失败 seed 被 summary 静默忽略。
+
+### RED FLAG 12
+
+根据 lunci10 Hammett scatter 人工删除 outlier。
+
+### RED FLAG 13
+
+把在 lunci10 上训练过的 Siamese 称为 strict external。
+
+### RED FLAG 14
+
+把 lunci10 描述为完整 38×30 factorial matrix。
+
+---
+
+# 59. 正式执行顺序
+
+严格按照以下顺序：
+
+## Phase 0
+
+Repository audit
+
+↓
+
+## Phase 1
+
+lunci10 statistics / context audit
+
+↓
+
+## Phase 2
+
+training overlap audit
+
+↓
+
+## Phase 3
+
+冻结 final Base / RC-GNN checkpoint
+
+↓
+
+## Phase 4
+
+strict zero-shot absolute prediction on lunci10
+
+↓
+
+## Phase 5
+
+novelty decomposition
+
+↓
+
+## Phase 6
+
+construct chemically matched lunci10 pairs
+
+↓
+
+## Phase 7
+
+zero-shot Δ prediction by frozen models
+
+↓
+
+## Phase 8
+
+check whether internal pair training is possible
+
+↓
+
+## Phase 9
+
+if possible:
+train ΔFP / Siamese internally
+→ external lunci10 pair test
+
+↓
+
+## Phase 10
+
+scaffold/context bias decomposition
+
+↓
+
+## Phase 11
+
+Hammett chemical validation
+
+↓
+
+## Phase 12
+
+position and C/N linkage analysis
+
+↓
+
+## Phase 13
+
+main Fig.4 summary
+
+只有完成主 Fig.4 后再运行：
+
+↓
+
+## Phase 14
+
+pretraining low-data
+
+↓
+
+## Phase 15
+
+anchor robustness
+
+↓
+
+## Phase 16
+
+M3/M4/M8 SI experiments
+
+---
+
+# 60. 第一次回复用户时只完成 Phase 0–2
+
+不要立即启动正式 GPU 批处理。
+
+先返回：
+
+### A. repository
+
+* relevant files
+* model files
+* checkpoints
+* existing Fig.4 code
+
+### B. lunci10
+
+真实：
+
+* N records
+* N molecules
+* N ring_name
+* N sub_name
+* N ring_pos
+* N sub_type
+* N context
+
+并解释：
+
+为什么 N=1389 > 38×30。
+
+### C. label
+
+三个 descriptor 的：
+
+* exact column
+* missing
+* range
+* unit
+
+### D. overlap
+
+* exact molecule overlap
+* scaffold overlap
+* ring-family overlap
+* substituent overlap
+
+### E. final model
+
+确认：
+
+是否 binary target-ring membership + learnable projection。
+
+### F. pair feasibility
+
+internal dataset 是否能建立 matched substituent pairs。
+
+### G. Hammett
+
+lookup 路径以及：
+
+F
+Cl
+OMe
+
+coverage。
+
+### H. coding plan
+
+列出：
+
+准备新增文件
+准备修改文件
+准备复用文件
+
+### I. commands
+
+给出实际运行命令。
+
+发现可以自动解决的问题：
+
+自行读取代码解决。
+
+不要反复询问用户。
+
+---
+
+# 61. 最终 FIG4_RESULTS_REPORT.md 的叙事顺序
+
+不要按照代码脚本顺序写。
+
+按照科学问题写。
+
+---
+
+## 第一部分
+
+### Does the ring-conditioned representation generalize to unseen molecules?
+
+使用 lunci10 strict external。
+
+---
+
+## 第二部分
+
+### What determines external generalization difficulty?
+
+分析：
+
+scaffold novelty
+substituent novelty
+chemical similarity
+ring family
+
+---
+
+## 第三部分
+
+### Are substituent-induced relative effects more transferable than absolute aromaticity?
+
+分析：
+
+A
+
+vs
+
+ΔA。
+
+---
+
+## 第四部分
+
+### Why can relative predictions generalize better?
+
+分析：
+
+scaffold-level calibration bias cancellation。
+
+---
+
+## 第五部分
+
+### Are the learned perturbations chemically meaningful?
+
+Hammett
+
+*
+
+position dependence。
+
+---
+
+# 62. 最终允许形成的最强结论
+
+只有数据完整支持时：
+
+**A target-ring-conditioned representation generalizes to chemically distinct external molecules and preserves transferable substituent-induced aromaticity perturbations across diverse aromatic scaffolds.**
+
+如果 scaffold bias analysis 也支持：
+
+**Relative substituent effects remain predictable even when absolute aromaticity values exhibit scaffold-dependent calibration offsets.**
+
+如果 Hammett analysis 支持：
+
+**The learned perturbations recover chemically meaningful electronic and positional substituent trends.**
+
+不要超过数据证据。
+
+---
+
+# 63. 整个 Fig.4 必须坚持的核心原则
+
+Fig.4 不是：
+
+“我们测试了很多 GNN 技巧。”
+
+也不是：
+
+“我们换了更多 split。”
+
+Fig.4 的真正逻辑必须始终保持：
+
+**Frozen model**
+→
+**strict external lunci10**
+→
+**chemical novelty**
+→
+**relative substituent perturbation**
+→
+**scaffold-bias explanation**
+→
+**Hammett/position chemical validation**
+
+最终希望回答：
+
+**The model does not merely recognize familiar aromatic scaffolds; it learns relative substituent effects that can remain transferable across previously unseen chemical environments.**

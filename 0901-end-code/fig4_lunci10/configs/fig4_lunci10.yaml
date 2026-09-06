@@ -1,0 +1,45 @@
+# Fig.4 lunci10 External Generalization Config
+# All paths are relative to the project root (aroma-dps/)
+
+paths:
+  code_root: code_end
+  proj_root: .
+  lunci10_dir: lunci10
+
+  # 严格使用修正后的数据
+  lunci10_test: lunci10/lunci10-test-corrected.csv
+  lunci10_unified: lunci10/lunci10_unified.csv
+  lunci10_begin: lunci10/lunci10-begin.csv
+  lunci10_summary: lunci7_8_out_nics/lunci10/lunci10-homa-mbco-nics-summary.csv
+
+  # 内部训练数据
+  internal_train_homa: code_end/data1_end/collet_homa_0716.csv
+  internal_train_mbco: code_end/data1_end/collet_mbco_0716.csv
+  internal_train_nics: code_end/data1_end/collet_nics_0716.csv
+
+  # 冻结 checkpoints
+  layer2_gnn_dir: code_end/results/layer2_gnn
+  layer3_ring_dir: code_end/results/layer3_ring_fixed
+  aromatic_split_dir: code_end/aromatic_split/results
+
+  # Hammett lookup
+  hammett_module: code_end/layer4_substituent/code/hammett_constants.py
+
+  output_root: 0901-end-code/results/fig4_lunci10_final
+
+seeds:
+  split_seed: 42
+  model_seeds: [42, 123, 456, 789, 2024]
+
+model:
+  ring_flag_value: 10
+  feature_mode: atom_bond
+  n_folds: 5
+  tasks: [HOMA, NICS_1zz, MBCO]
+
+zero_shot:
+  forbidden_actions:
+    - fit_scaler_on_lunci10
+    - select_checkpoint_using_lunci10
+    - tune_hyperparameters_using_lunci10
+    - early_stop_using_lunci10
