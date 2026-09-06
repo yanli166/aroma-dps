@@ -75,8 +75,8 @@ def extract_ring_features(smiles, atom_on_ring, ring_size, nics_zz1=None, nics_z
     except Exception:
         pass
 
-    # atom_on_ring 是 1-indexed，转换为 0-indexed
-    ring_atom_indices = [idx - 1 for idx in atom_on_ring if idx - 1 >= 0 and idx - 1 < mol.GetNumAtoms()]
+    # atom_on_ring is 0-based (verified by P0-2 audit across 20,605 rows)
+    ring_atom_indices = [int(idx) for idx in atom_on_ring if isinstance(idx, (int, float)) and 0 <= idx < mol.GetNumAtoms()]
     n_ring_atoms = len(ring_atom_indices)
 
     if n_ring_atoms == 0:

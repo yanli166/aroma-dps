@@ -171,7 +171,8 @@ def compute_ring_descriptors(df, feature_mode='standard'):
         ring_size = row.get('Ring_Size', 0)
         ring_id = row.get('Ring_ID', 1)
 
-        target_ring_atoms = [idx - 1 for idx in atom_on_ring if isinstance(idx, (int, float)) and idx > 0]
+        # atom_on_ring is 0-based (verified by P0-2 audit across 20,605 rows)
+        target_ring_atoms = [int(idx) for idx in atom_on_ring if isinstance(idx, (int, float)) and 0 <= idx < mol.GetNumAtoms()]
 
         ring_info = mol.GetRingInfo()
         atom_rings = ring_info.AtomRings()

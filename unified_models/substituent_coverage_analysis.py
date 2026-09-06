@@ -48,7 +48,8 @@ def analyze_ring_substituent_coverage():
         if mol is None:
             continue
 
-        ring_atom_indices = [i - 1 for i in atom_on_ring if i - 1 >= 0 and i - 1 < mol.GetNumAtoms()]
+        # atom_on_ring is 0-based (verified by P0-2 audit across 20,605 rows)
+        ring_atom_indices = [int(i) for i in atom_on_ring if isinstance(i, (int, float)) and 0 <= i < mol.GetNumAtoms()]
         if len(ring_atom_indices) == 0:
             continue
 
