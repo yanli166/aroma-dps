@@ -1,0 +1,61 @@
+# Fig.3: Representation
+# Panels: FP vs GNN vs RC-GNN, 2×2 ablation, mask pretraining, cross-arch,
+#         ring flag sensitivity, final membership, explicit aromaticity ablation
+#
+# Source scripts (do not duplicate):
+#   0831-end-code/stage1_representation_comparison/code/run_stage1_v2.py
+#   0831-end-code/stage2_ring_conditioning/code/ring_conditioning_ablation.py
+#   0831-end-code/stage3_mask_pretraining/code/run_mask_pretrain_v2.py
+#   0831-end-code/stage4_cross_architecture/code/run_stage4_v2.py
+#   0831-end-code/stage5_ring_flag_sensitivity/code/run_ring_flag_sensitivity.py
+#   0831-end-code/stage6_final_membership/code/run_final_membership.py
+#
+# Protocol: get_final_splits(SPLIT_SEED=2026)
+# Model seeds: [42, 123, 456, 789, 2024]
+# Feature modes: standard + explicit_aromaticity_ablated
+
+fig3:
+  stage1:
+    script: "0831-end-code/stage1_representation_comparison/code/run_stage1_v2.py"
+    config:
+      split_seed: 2026
+      model_seeds: [42, 123, 456, 789, 2024]
+      feature_modes: [standard, explicit_aromaticity_ablated]
+      tasks: [HOMA, NICS_1zz, MCBO]
+
+  stage2:
+    script: "0831-end-code/stage2_ring_conditioning/code/ring_conditioning_ablation.py"
+    config:
+      split_seed: 2026
+      model_seeds: [42, 123, 456, 789, 2024]
+      factorial_design: [Base, Membership, LearnableReadout, Joint]
+      note: "Preserve original ring_flag=10 for Membership/Joint. Do NOT unify with final model."
+
+  stage3:
+    script: "0831-end-code/stage3_mask_pretraining/code/run_mask_pretrain_v2.py"
+    config:
+      split_seed: 2026
+      model_seeds: [42, 123, 456, 789, 2024]
+      modes: [direct, random_mask, ring_mask]
+
+  stage4:
+    script: "0831-end-code/stage4_cross_architecture/code/run_stage4_v2.py"
+    config:
+      split_seed: 2026
+      model_seeds: [42, 123, 456, 789, 2024]
+      architectures: [GNN, GIN, GAT, MPNN, GraphSAGE, DMPNN]
+
+  stage5:
+    script: "0831-end-code/stage5_ring_flag_sensitivity/code/run_ring_flag_sensitivity.py"
+    config:
+      split_seed: 2026
+      model_seeds: [42, 123, 456, 789, 2024]
+      ring_flags: [0, 1, 5, 10]
+
+  stage6:
+    script: "0831-end-code/stage6_final_membership/code/run_final_membership.py"
+    config:
+      split_seed: 2026
+      model_seeds: [42]
+      final_model: "binary membership (0/1) + nn.Embedding(2, hidden_dim)"
+      note: "HOMA uses membership_proj. NICS/MCBO use membership_1."

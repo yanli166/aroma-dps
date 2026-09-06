@@ -1,0 +1,28 @@
+# Fig.5: Curated reaction validation
+#
+# Supports:
+#   - reactant/product DFT reference
+#   - model prediction
+#   - predicted vs DFT absolute descriptor
+#   - predicted vs DFT aromaticity loss
+#   - fixed reaction → different ring chemotypes
+#   - fixed ring → different reaction manifolds
+#   - descriptor coupling/PCA
+#   - representative reaction case study
+#
+# Delta definitions:
+#   ΔHOMA = HOMA_R - HOMA_P
+#   ΔMCBO = MCBO_R - MCBO_P
+#   ΔNICS* = NICS_P - NICS_R
+#   ΔA > 0 = aromaticity loss
+
+fig5:
+  delta_definitions:
+    dHOMA: "HOMA_R - HOMA_P"
+    dMCBO: "MCBO_R - MCBO_P"
+    dNICS_star: "NICS_P - NICS_R"
+    aromaticity_loss: "dA > 0"
+
+  source_scripts:
+    reaction_prediction: "src/aroma_dps/inference/reaction_prediction.py"
+    ring_prediction: "src/aroma_dps/inference/ring_prediction.py"

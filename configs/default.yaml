@@ -1,0 +1,50 @@
+# Default configuration for aroma_dps publication pipeline
+
+# Task naming
+tasks:
+  canonical: [HOMA, NICS_1zz, MCBO]
+  aliases:
+    MBCO: MCBO
+    nMCBO: MCBO
+    mcbo: MCBO
+    mbco: MCBO
+
+# Split protocol
+split:
+  publication_seed: 2026
+  function: get_final_splits
+  deprecated: canonical_splits  # wrapper with DeprecationWarning
+
+# Model seeds for publication runs
+model_seeds: [42, 123, 456, 789, 2024]
+
+# Feature modes
+feature_modes:
+  - standard
+  - explicit_aromaticity_ablated
+
+# Provenance
+provenance:
+  required_fields:
+    - git_commit
+    - git_dirty
+    - experiment_id
+    - task  # {canonical, original_label}
+    - model
+    - config
+    - split_manifest
+    - split_seed
+    - model_seed
+    - dataset_hash
+    - scaler_hash
+    - checkpoint
+    - package_versions
+    - start_time
+    - end_time
+    - run_status
+  summary_gate:
+    # Summary only generated when:
+    # expected_runs == completed_runs
+    # missing_runs == 0
+    # failed_runs == 0
+    all_complete: true

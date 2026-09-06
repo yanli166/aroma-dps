@@ -1,0 +1,66 @@
+# Fig.4: Generalization
+# Panels: Random, Scaffold OOD, Ring-family OOD, Exposure/adaptation,
+#         External absolute, External delta, Hammett, Novelty
+#
+# Source scripts:
+#   0901-end-code/fig4_lunci10/training/train_scaffold_ood.py
+#   0901-end-code/fig4_lunci10/training/train_exposure_curve.py
+#   0901-end-code/fig4_lunci10/training/train_l10_exposure.py
+#   0901-end-code/fig4_lunci10/evaluation/run_external_absolute_v2.py
+#   0901-end-code/fig4_lunci10/evaluation/run_external_delta.py
+#   0901-end-code/fig4_lunci10/analysis/hammett_analysis.py
+#   0901-end-code/fig4_lunci10/analysis/novelty_analysis.py
+#
+# Protocol:
+#   Scaffold OOD: global_scaffold_split_map.csv (80/20 Murcko scaffold, seed=42)
+#   Ring-family OOD: ring-family split (5 split seeds)
+#   Exposure: global_dev_scaffold_order.csv (nested Train20⊂Train40⊂...⊂Train100)
+#   0% exposure = frozen zero-shot checkpoint
+#   >0% = fine-tune from frozen checkpoint
+#   External: frozen checkpoints, clean manifest, NO training
+
+fig4:
+  scaffold_ood:
+    script: "0901-end-code/fig4_lunci10/training/train_scaffold_ood.py"
+    config:
+      split: "global_scaffold_split_map.csv"
+      split_seed: 42
+      model_seeds: [42, 123, 456, 789, 2024]
+      protocol: "E*=median(5 best epochs)"
+
+  ring_family_ood:
+    script: "0901-end-code/fig4_lunci10/training/train_l10_exposure.py"
+    config:
+      split: "ring_family"
+      split_seeds: [42, 123, 456, 789, 2024]
+      model_seeds: [42, 123, 456, 789, 2024]
+      zero_shot: "0% = frozen checkpoint, no fine-tuning"
+      adaptation: ">0% = fine-tune from frozen checkpoint"
+
+  exposure_curve:
+    script: "0901-end-code/fig4_lunci10/training/train_exposure_curve.py"
+    config:
+      split: "global_dev_scaffold_order.csv"
+      split_seed: 42
+      exposures: [0, 20, 40, 60, 80, 100]
+      note: "Reuses E* from scaffold_ood. No new epoch selection."
+
+  external_absolute:
+    script: "0901-end-code/fig4_lunci10/evaluation/run_external_absolute_v2.py"
+    config:
+      manifest: "lunci10_clean_manifest.csv"
+      note: "v2 only. v1 (full manifest) is DEPRECATED."
+
+  external_delta:
+    script: "0901-end-code/fig4_lunci10/evaluation/run_external_delta.py"
+    config:
+      manifest: "lunci10_clean_manifest.csv"
+      delta_definitions:
+        dHOMA: "HOMA_R - HOMA_P"
+        dMCBO: "MCBO_R - MCBO_P"
+        dNICS_star: "NICS_P - NICS_R"
+      aromaticity_loss: "dA > 0"
+
+  analysis:
+    hammett: "0901-end-code/fig4_lunci10/analysis/hammett_analysis.py"
+    novelty: "0901-end-code/fig4_lunci10/analysis/novelty_analysis.py"

@@ -1,0 +1,30 @@
+# Fig.6: USPTO reaction-scale application
+#
+# Prediction-only large-scale application.
+# Must save ensemble uncertainty and failure manifest.
+#
+# Supports:
+#   - reaction screening
+#   - atom-mapped target-ring tracking
+#   - Tier-A filtering
+#   - target vs spectator rings
+#   - 4k+ reaction predictions
+#   - ring-family statistics
+#   - aromaticity-loss distributions
+#   - multidimensional descriptor analysis
+#   - structural/nonplanarity analysis
+#   - discordant cases
+
+fig6:
+  prediction_only: true
+  ensemble_uncertainty: true
+  failure_manifest: true
+
+  delta_definitions:
+    dHOMA: "HOMA_R - HOMA_P"
+    dMCBO: "MCBO_R - MCBO_P"
+    dNICS_star: "NICS_P - NICS_R"
+    aromaticity_loss: "dA > 0"
+
+  source_scripts:
+    reaction_prediction: "src/aroma_dps/inference/reaction_prediction.py"
