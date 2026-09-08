@@ -43,8 +43,8 @@ while not _os.path.exists(_os.path.join(_d, 'unified_models')) and _d != '/':
 _PROJ_ROOT = _d
 # --- End auto path bootstrap ---
 
-PROJ_ROOT = Path("_PROJ_ROOT")
-CODE_END = PROJ_ROOT / "code_end"
+PROJ_ROOT = Path(_PROJ_ROOT)
+CODE_END = PROJ_ROOT / "archive/deprecated/code_end"
 for p in (str(PROJ_ROOT), str(CODE_END), str(CODE_END / "layer4_substituent")):
     if Path(p).exists() and p not in sys.path:
         sys.path.insert(0, p)

@@ -1,0 +1,84 @@
+{
+  "n_target_pairs_complete": 4377,
+  "n_target_pairs_total_tierA": 4443,
+  "n_all_ring_pairs": 10221,
+  "stage2_tier_counts": {
+    "R": 5722,
+    "A": 4443,
+    "C": 40,
+    "B": 16
+  },
+  "n_unique_reactions_tierA": 4306,
+  "n_unique_reactions_all_rings": 4306,
+  "multi_target_rings_per_reaction": {
+    "count_reactions": 137,
+    "distribution": {
+      "1": 4169,
+      "2": 137
+    }
+  },
+  "n_spectator_rings": 5722,
+  "n_spectator_with_existing_prediction": 0,
+  "prediction_coverage": {
+    "pairs_with_both_RP_pass": 4383,
+    "pairs_with_one_pass": 42,
+    "pairs_with_zero_pass": 0,
+    "tierA_target_pairs_with_both_pass": 4383,
+    "spectator_pairs_with_both_pass": 0
+  },
+  "nan_inf_per_descriptor": {
+    "HOMA_pred_reactant": {
+      "nan": 0,
+      "inf": 0
+    },
+    "HOMA_pred_product": {
+      "nan": 0,
+      "inf": 0
+    },
+    "nMCBO_pred_reactant": {
+      "nan": 0,
+      "inf": 0
+    },
+    "nMCBO_pred_product": {
+      "nan": 0,
+      "inf": 0
+    },
+    "NICS_1zz_pred_reactant": {
+      "nan": 0,
+      "inf": 0
+    },
+    "NICS_1zz_pred_product": {
+      "nan": 0,
+      "inf": 0
+    }
+  },
+  "pair_id_dups": 0,
+  "reaction_id_usable_for_clustering": {
+    "tierA_with_target": 4306,
+    "with_complete_prediction": 4243
+  },
+  "canonicalization_mismatch": {
+    "samples_REINDEXED": 0,
+    "total_samples": 8886,
+    "pairs_REINDEXED": 0
+  },
+  "ring_family_n_families": 16,
+  "ring_family_counts": {
+    "quinoline_or_isoquinoline": 962,
+    "pyridine": 696,
+    "indole": 512,
+    "other N-heteroarene": 447,
+    "other carbocycle": 347,
+    "benzene": 322,
+    "other O-heteroarene": 247,
+    "phenol-type": 210,
+    "other S-heteroarene": 163,
+    "benzofuran": 145,
+    "furan": 76,
+    "naphthol-type": 72,
+    "benzothiophene": 67,
+    "naphthalene": 61,
+    "thiophene": 28,
+    "pyrrole": 22
+  }
+}

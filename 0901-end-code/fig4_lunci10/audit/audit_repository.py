@@ -26,10 +26,10 @@ _PROJ_ROOT = _d
 # --- End auto path bootstrap ---
 
 # Make project root importable for shared utilities if needed.
-PROJ_ROOT = "_PROJ_ROOT"
-CODE_END_ROOT = "_PROJ_ROOT + "/code_end""
-FIG4_ROOT = Path("_PROJ_ROOT/0901-end-code/fig4_lunci10")
-AUDIT_OUT = Path("_PROJ_ROOT/0901-end-code/results/fig4_lunci10_final/00_audit")
+PROJ_ROOT = _PROJ_ROOT
+CODE_END_ROOT = Path(_PROJ_ROOT) / "archive/deprecated/code_end"
+FIG4_ROOT = Path(_PROJ_ROOT) / "0901-end-code/fig4_lunci10"
+AUDIT_OUT = Path(_PROJ_ROOT) / "0901-end-code/results/fig4_lunci10_final/00_audit"
 
 for p in (PROJ_ROOT, CODE_END_ROOT):
     if p not in sys.path and Path(p).exists():

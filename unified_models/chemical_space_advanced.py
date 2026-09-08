@@ -34,7 +34,7 @@ from sklearn.preprocessing import StandardScaler
 
 warnings.filterwarnings('ignore')
 
-PROJ_ROOT = '_PROJ_ROOT'
+PROJ_ROOT = _PROJ_ROOT
 DATASET_PATH = os.path.join(PROJ_ROOT, 'nics-nics1zz-out-no3.csv')
 OUTPUT_DIR = os.path.join(PROJ_ROOT, '0427_unified_results', 'chemical_space')
 os.makedirs(OUTPUT_DIR, exist_ok=True)

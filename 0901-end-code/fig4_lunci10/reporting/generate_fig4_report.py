@@ -42,14 +42,14 @@ while not _os.path.exists(_os.path.join(_d, 'unified_models')) and _d != '/':
 _PROJ_ROOT = _d
 # --- End auto path bootstrap ---
 
-PROJ_ROOT = "_PROJ_ROOT"
-CODE_END = f"{PROJ_ROOT}/code_end"
+PROJ_ROOT = _PROJ_ROOT
+CODE_END = f"{PROJ_ROOT}/archive/deprecated/code_end"
 for p in (PROJ_ROOT, CODE_END):
     if Path(p).exists() and p not in sys.path:
         sys.path.insert(0, p)
 
-FIG4_ROOT = Path("_PROJ_ROOT/0901-end-code/fig4_lunci10")
-FINAL_DIR = Path("_PROJ_ROOT/0901-end-code/results/fig4_lunci10_final")
+FIG4_ROOT = Path(_PROJ_ROOT) / "0901-end-code/fig4_lunci10"
+FINAL_DIR = Path(_PROJ_ROOT) / "0901-end-code/results/fig4_lunci10_final"
 ABS_SUMMARY = FINAL_DIR / "01_external_absolute" / "fig4a_generalization_summary.csv"
 ABS_PRED = FINAL_DIR / "01_external_absolute" / "lunci10_absolute_predictions.csv"
 NOVELTY_CAT = FINAL_DIR / "02_novelty" / "novelty_category_summary.csv"

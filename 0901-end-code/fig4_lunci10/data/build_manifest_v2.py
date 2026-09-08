@@ -27,7 +27,7 @@ RDLogger.DisableLog("rdApp.*")
 THIS_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
 # fig4_lunci10/data/ -> fig4_lunci10/ -> 0901-end-code/ -> aroma-dps/
 PROJ_ROOT = Path(os.path.dirname(os.path.dirname(os.path.dirname(str(THIS_DIR)))))
-CODE_END = PROJ_ROOT / "code_end"
+CODE_END = PROJ_ROOT / "archive/deprecated/code_end"
 FIG4_ROOT = PROJ_ROOT / "0901-end-code/fig4_lunci10"
 AUDIT_OUT = PROJ_ROOT / "0901-end-code/results/fig4_lunci10_final/00_audit"
 CONFIG_PATH = FIG4_ROOT / "configs" / "fig4_lunci10.yaml"

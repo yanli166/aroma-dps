@@ -129,10 +129,13 @@ wait $PID_S2
 echo "[Phase2] Stage 2 完成, 启动 Stage 3"
 
 # --- Phase 3: Stage 3 (依赖 Stage 2, 单轨) ---
+# run_mask_pretrain_v2.py = publication protocol (get_final_splits, SPLIT_SEED=2026).
+# The legacy run_pretrain_eval.py used canonical_splits(seed=model_seed) and is
+# NON-publication; it stays available under archive/deprecated/.
 for seed in "${SEEDS[@]}"; do
     echo "[Stage3] seed=${seed} gpu=0" | tee -a "${LOG_DIR}/stage3.log"
     CUDA_VISIBLE_DEVICES=0 ${PYTHON} \
-        stage3_mask_pretraining/code/run_pretrain_eval.py \
+        stage3_mask_pretraining/code/run_mask_pretrain_v2.py \
         --seed ${seed} --gpu 0 \
         2>&1 | tee -a "${LOG_DIR}/stage3_s${seed}.log"
 done

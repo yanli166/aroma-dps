@@ -1,0 +1,11 @@
+{
+  "collet_ab_train": 6630,
+  "l10_train_molecules": 1087,
+  "l10_val_molecules": 272,
+  "l10_train_records": 1686,
+  "l10_val_records": 436,
+  "total_train_records": 8316,
+  "total_val_records": 436,
+  "split_seed": 2026,
+  "l10_test_frac": 0.2
+}

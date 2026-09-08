@@ -1,0 +1,12 @@
+{
+  "task": "MBCO",
+  "collet_ab_train": 6699,
+  "l10_train_molecules": 1087,
+  "l10_val_molecules": 272,
+  "l10_val_molecules_in_homa": 272,
+  "l10_train_records": 1687,
+  "l10_val_records": 436,
+  "extra_l10_train_records": 29,
+  "total_train_records": 8386,
+  "total_val_records": 436
+}

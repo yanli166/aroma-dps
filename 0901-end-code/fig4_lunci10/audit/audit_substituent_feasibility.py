@@ -30,8 +30,8 @@ _PROJ_ROOT = _d
 
 RDLogger.DisableLog("rdApp.*")
 
-PROJ_ROOT = Path("_PROJ_ROOT")
-CODE_END = PROJ_ROOT / "code_end"
+PROJ_ROOT = Path(_PROJ_ROOT)
+CODE_END = PROJ_ROOT / "archive/deprecated/code_end"
 FIG4_ROOT = PROJ_ROOT / "0901-end-code/fig4_lunci10"
 AUDIT_OUT = PROJ_ROOT / "0901-end-code/results/fig4_lunci10_final/00_audit"
 

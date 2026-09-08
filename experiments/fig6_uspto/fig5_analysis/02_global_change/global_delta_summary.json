@@ -1,0 +1,15 @@
+{
+  "N": 4377,
+  "median_Delta_HOMA": 2.2839645743370056,
+  "median_Delta_nMCBO": 0.2512828409671783,
+  "median_Delta_NICS_star": 25.527480363845825,
+  "mean_Delta_HOMA": 2.37658071446111,
+  "mean_Delta_nMCBO": 0.2374095101660998,
+  "mean_Delta_NICS_star": 22.65099312906018,
+  "frac_gt0_Delta_HOMA": 0.9963445282156729,
+  "frac_gt0_Delta_nMCBO": 0.9828649760109665,
+  "frac_gt0_Delta_NICS_star": 0.9942883253369889,
+  "ALL_LOSS_frac": 0.973954763536669,
+  "DISCORDANT_frac": 0.02604523646333105,
+  "ALL_GAIN_OR_NONLOSS_frac": 0.0
+}

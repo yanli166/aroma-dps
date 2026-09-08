@@ -33,7 +33,7 @@ from scipy.stats import pearsonr, spearmanr
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 # fig4_lunci10/evaluation/ -> fig4_lunci10/ -> 0901-end-code/ -> aroma-dps/
 PROJ_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(_THIS_DIR)))
-CODE_END = os.path.join(PROJ_ROOT, "code_end")
+CODE_END = os.path.join(PROJ_ROOT, "archive/deprecated/code_end")
 ORIG_MODELS_ROOT = os.path.join(PROJ_ROOT, "unified_models")
 for p in (PROJ_ROOT, CODE_END, ORIG_MODELS_ROOT):
     if Path(p).exists() and p not in sys.path:

@@ -45,8 +45,8 @@ plt.rcParams.update({
     'ps.fonttype': 42,
 })
 
-DATASET_PATH = '_PROJ_ROOT + "/unified_models"/nics-nics1zz-out-no3.csv'
-OUTPUT_DIR = '_PROJ_ROOT + "/unified_models"/0427_unified_results/chemical_space'
+DATASET_PATH = os.path.join(_PROJ_ROOT, "unified_models", "nics-nics1zz-out-no3.csv")
+OUTPUT_DIR = os.path.join(_PROJ_ROOT, "unified_models", "0427_unified_results/chemical_space")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # ── Color palette (Nature/Science-inspired) ──────────────────────────────

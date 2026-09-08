@@ -1,0 +1,11 @@
+{
+  "audit_name": "structural aromaticity-retention audit",
+  "evidence_level": "RDKit aromatic flags only (reactant/product aromatic-ring retention); NOT a quantum-chemical or electronic aromaticity validation",
+  "sampled_rows": 4000,
+  "reactant_ring_aromatic": 4000,
+  "reactant_ring_nonaromatic": 0,
+  "product_ring_still_aromatic": 4000,
+  "product_ring_lost_aromatic": 0,
+  "parse_fail": 0,
+  "conclusion": "In all 4,000 sampled spectator rings the RDKit aromatic flag is retained on both reactant and product sides -> the spectator rings are structurally unaffected internal controls (their predicted aromaticity shows negligible change; they are not claimed to be quantum-chemically validated)."
+}

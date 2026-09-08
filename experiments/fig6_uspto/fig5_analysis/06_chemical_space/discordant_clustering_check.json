@@ -1,0 +1,6 @@
+{
+  "n_discordant": 114,
+  "umap_30nn_mean_dist_discordant": 0.04749818769164509,
+  "umap_30nn_mean_dist_all": 0.05168423976373564,
+  "note": "UMAP is visualization only; for quantitative similarity use Tanimoto."
+}

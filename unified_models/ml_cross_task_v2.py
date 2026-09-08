@@ -51,7 +51,7 @@ from scipy.stats import gaussian_kde
 
 warnings.filterwarnings('ignore')
 
-PROJ_ROOT = '_PROJ_ROOT'
+PROJ_ROOT = _PROJ_ROOT
 OUTPUT_DIR = os.path.join(PROJ_ROOT, 'ml_cross_task_results_v2')
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 

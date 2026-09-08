@@ -1,0 +1,179 @@
+
+
+另外，下面把每张图具体怎么做、表达什么都写清楚。即使压缩包仍然打不开，你也可以按照这套方案自己在 Origin、GraphPad、Python 或 Illustrator 里重画。
+
+### 先说明所有图共同的数据处理方式
+
+你的表里共有 166 行，对应 83 个反应物–产物 pair。由于当前 Excel 没有显式的 `Reaction_ID`，我暂时按照每个 `type3 × type1` 分组内部原始顺序，将反应物和产物一一配对。
+
+三个芳香性变化统一定义成“正值 = 芳香性损失”：
+
+[
+\Delta HOMA=HOMA_{\mathrm{reactant}}-HOMA_{\mathrm{product}}
+]
+
+[
+\Delta MBCO=MBCO_{\mathrm{reactant}}-MBCO_{\mathrm{product}}
+]
+
+对于 NICS，因为通常越负代表越芳香，所以方向反过来：
+
+[
+\Delta NICS=NICS_{\mathrm{product}}-NICS_{\mathrm{reactant}}
+]
+
+因此三者都是：
+
+[
+\Delta A>0 \Rightarrow aromaticity\ loss
+]
+
+结构变化则定义：
+
+[
+\Delta RPD=RPD_P-RPD_S
+]
+
+[
+\Delta PBF=PBF_P-PBF_S
+]
+
+[
+\Delta F_{sp^3}=F_{sp^3,P}-F_{sp^3,S}
+]
+
+正值都表示反应后对应结构特征增加。
+
+| 图                                  | 横轴 / 分组             | 纵轴            | 图是怎么做的                             | 它回答什么问题                        | 建议位置                          |
+| ---------------------------------- | ------------------- | ------------- | ---------------------------------- | ------------------------------ | ----------------------------- |
+| **Fig1 HOMA reactant vs product**  | Reactant / Product  | HOMA          | 两组 boxplot + 每个样本散点                | CADA 前后几何芳香性是否整体下降             | **主文**                        |
+| **Fig2 MBCO reactant vs product**  | Reactant / Product  | MBCO          | boxplot + raw points               | 电子离域是否整体下降                     | 主文或 SI                        |
+| **Fig3 NICS reactant vs product**  | Reactant / Product  | NICS(ZZ)      | boxplot + raw points               | 磁芳香性是否整体减弱                     | 主文或 SI                        |
+| **Fig4 ΔHOMA by reaction type**    | 光催化 / 氢化 / 烯丙基去芳构化  | ΔHOMA         | 每类 boxplot + raw points            | 不同反应模式的几何芳香性损失是否不同             | **主文**                        |
+| **Fig5 ΔMBCO by reaction type**    | 同上                  | ΔMBCO         | boxplot + raw points               | reaction mode 对电子离域损失的影响       | 主文组合 panel / SI               |
+| **Fig6 ΔNICS by reaction type**    | 同上                  | ΔNICS         | boxplot + raw points               | reaction mode 对磁芳香性损失的影响       | 主文组合 panel / SI               |
+| **Fig7 ΔHOMA by ring type**        | 呋喃、萘、萘2、吲哚、吡咯、苯酚、萘酚 | ΔHOMA         | ring family 分组 boxplot + points    | 不同环系芳香性损失是否不同                  | **主文，但需控制 reaction type 后升级** |
+| **Fig8 ΔMBCO by ring type**        | ring family         | ΔMBCO         | 同 Fig7                             | 环系对电子芳香性损失的影响                  | SI / 组合 panel                 |
+| **Fig9 ΔNICS by ring type**        | ring family         | ΔNICS         | 同 Fig7                             | 环系对磁芳香性损失的影响                   | SI / 组合 panel                 |
+| **Fig10 ΔHOMA vs ΔMBCO**           | ΔHOMA               | ΔMBCO         | 每个反应一个点 + 线性拟合 + Pearson (r)       | 几何与电子芳香性损失是否同步                 | **主文候选**                      |
+| **Fig11 ΔHOMA vs ΔNICS**           | ΔHOMA               | ΔNICS         | 同上                                 | 几何与磁芳香性变化是否同步                  | 主文候选 / SI                     |
+| **Fig12 RPD reactant vs product**  | Reactant / Product  | Ring RPD      | boxplot + raw points               | 目标环去芳构化后是否更偏离平面                | **主文强烈推荐**                    |
+| **Fig13 PBF reactant vs product**  | Reactant / Product  | Molecular PBF | boxplot + raw points               | 整个分子的非平面性是否总体增加                | 主文辅助 / SI                     |
+| **Fig14 Fsp³ reactant vs product** | Reactant / Product  | (F_{sp^3})    | boxplot + raw points               | 去芳构化是否伴随 sp³ character 增加      | SI 或辅助 panel                  |
+| **Fig15 ΔRPD by reaction type**    | 三种 reaction mode    | ΔRPD          | boxplot + raw points               | 不同反应模式造成的目标环几何重组是否不同           | **主文候选**                      |
+| **Fig16 ΔPBF by reaction type**    | 三种 reaction mode    | ΔPBF          | boxplot + raw points               | 不同 reaction mode 的整体分子形状变化是否不同 | SI                            |
+| **Fig17 ΔHOMA vs ΔRPD**            | ΔHOMA               | ΔRPD          | scatter + linear fit + Pearson (r) | 芳香性损失和目标环非平面化有什么关系             | **主文强烈推荐**                    |
+| **Fig18 ΔHOMA vs ΔPBF**            | ΔHOMA               | ΔPBF          | scatter + fit + Pearson (r)        | 芳香性损失与整体分子非平面化是否相关             | SI / 辅助                       |
+| **Fig19 ΔHOMA vs ΔFsp³**           | ΔHOMA               | ΔFsp³         | scatter + fit + Pearson (r)        | 芳香性损失与 sp³ character 增加是否相关    | SI / 辅助                       |
+
+其中有几个地方，我建议最终投稿版再升级。
+
+第一，Fig1–3 当前是“总体反应物 vs 总体产物”分布。最终主文最好做成真正的 **paired slope plot**：每个反应物和对应产物之间画一条连接线。因为你的数据本身就是 reaction-paired，配对信息比普通两组 boxplot 强得多。可以在图中同时标：
+
+[
+p_{\rm paired}
+]
+
+以及 effect size，而不是只看两个 distribution。
+
+第二，Fig4–6 的设计是合理的，但目前三种 reaction type 的 ring composition 不一样。例如光催化中有呋喃、萘、吲哚等，而氢化目前主要是吲哚，所以 Fig4 的全局差异不能直接解释成：
+
+> 光催化造成的芳香性损失比氢化大。
+
+因为其中混入了 ring identity。
+
+因此 Fig4–6 适合先作为 **global landscape**；真正做 chemical determinant 时，应固定 ring family。例如只比较 indole：
+
+[
+\text{photocatalysis vs hydrogenation vs allylic dearomatization}
+]
+
+这才是 Results 5.2 最终要用的图。
+
+第三，Fig7–9 同理。当前不同 ring family 处于不同 reaction-type composition 中，所以只能描述：
+
+> 数据集中不同 ring groups 呈现不同 loss distributions。
+
+不能直接证明 ring intrinsic effect。
+
+真正正文应该再做：
+
+[
+\text{固定 reaction type}
+\rightarrow
+\text{比较 ring identity}
+]
+
+例如只看 photocatalysis：
+
+Furan vs Naphthalene vs Indole。
+
+这样才符合我们前面确定的顶刊级控制变量逻辑。
+
+第四，我认为你新数据里最值得认真发展的，是 Fig12 和 Fig17，而不是 Fsp³。Fig12 可以明确展示：
+
+[
+RPD_S\rightarrow RPD_P
+]
+
+即目标环从近似平面向非平面结构重组。
+
+Fig17 再回答：
+
+[
+\Delta HOMA \leftrightarrow \Delta RPD
+]
+
+但这里不要追求一定出现非常高的相关系数。实际上，如果大量数据表现为“相似 aromaticity loss、不同 RPD change”，这个结果更有意思，因为它说明：
+
+> **Aromaticity loss and geometric reorganization represent complementary rather than equivalent dimensions of dearomatization.**
+
+这比“去芳构化越强越立体”更严谨。
+
+你这批数据的总体结构变化，我已经算出来了。83 个反应 pair 中：
+
+[
+\mathrm{mean}(\Delta RPD)=0.1094
+]
+
+中位数：
+
+[
+0.0585
+]
+
+整体 PBF 平均变化：
+
+[
+\mathrm{mean}(\Delta PBF)=0.4086
+]
+
+而：
+
+[
+\mathrm{mean}(\Delta F_{sp^3})=0.1787
+]
+
+说明从总体上确实存在明显的结构重组信号，但正式论文里应进一步给出 paired statistical test、置信区间，并按 reaction/ring context 分层分析，而不是只引用这三个均值。
+
+如果现在按你的论文框架把这些图真正组装成一张 **CADA 主文 Figure 4**，我建议最终不是放 19 张独立小图，而是压缩成 6 个 panel：
+
+**Fig. 4a**：CADA 数据组成，ring type × reaction mode matrix。
+
+**Fig. 4b**：三种 aromaticity descriptor 的 substrate → product paired changes，可以把 HOMA/NICS/MBCO 三个小子图并排。
+
+**Fig. 4c**：(\Delta HOMA,\Delta NICS,\Delta MBCO) 的 distribution，证明 loss 是连续 landscape。
+
+**Fig. 4d**：三个 aromaticity losses 的 correlation/concordance，例如 ΔHOMA vs ΔMBCO / ΔNICS，强调 multidimensionality。
+
+**Fig. 4e**：RPD substrate → product paired plot，表现 structural reorganization。
+
+**Fig. 4f**：(\Delta HOMA) vs (\Delta RPD)，必要时不同 reaction mode 用不同符号，展示芳香性变化和结构变化是相关但不等价的两个维度。
+
+这比把 PBF、Fsp³、NPR、RPD 全塞在主文里更高级。PBF、Fsp³、NPR、Cremer–Pople Q、Asphericity 等完整验证可以放 SI。
+
+最后提醒一个投稿前必须修正的问题：目前配对依据是每个 `type1 × type3` 内的表格顺序，而不是你文件中的显式 Reaction ID。**做最终统计和 Figure 4 之前，我强烈建议给 83 个反应增加 `Pair_ID`，明确一条反应物对应哪条产物。** 然后所有 (\Delta HOMA)、(\Delta RPD) 等重新严格按 Pair_ID 计算。这样图本身的统计基础才够稳。
+
+压缩包仍然在这里：
+
+[下载 CADA 全部图 + SVG + PNG + 配对数据 ZIP](sandbox:/mnt/data/CADA_all_figures_and_data.zip)

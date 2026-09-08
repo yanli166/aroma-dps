@@ -1,0 +1,44 @@
+{
+  "HOMA": {
+    "val_r2": 0.9907957911491394,
+    "val_mae": 0.11099299788475037,
+    "val_rmse": 0.22124265134334564,
+    "best_epoch": 144,
+    "n_total": 6854,
+    "n_dev": 5471,
+    "n_test": 1383,
+    "n_final_train": 4781,
+    "n_final_val": 690,
+    "use_projection": true,
+    "ring_flag_value": 1,
+    "model_file": "homa_best.pt"
+  },
+  "NICS_1zz": {
+    "val_r2": 0.981357216835022,
+    "val_mae": 0.8718004822731018,
+    "val_rmse": 1.6651867628097534,
+    "best_epoch": 122,
+    "n_total": 6820,
+    "n_dev": 5479,
+    "n_test": 1341,
+    "n_final_train": 4804,
+    "n_final_val": 675,
+    "use_projection": false,
+    "ring_flag_value": 1,
+    "model_file": "nics_1zz_best.pt"
+  },
+  "MBCO": {
+    "val_r2": 0.9823193550109863,
+    "val_mae": 0.018260277807712555,
+    "val_rmse": 0.0398356169462204,
+    "best_epoch": 116,
+    "n_total": 6923,
+    "n_dev": 5537,
+    "n_test": 1386,
+    "n_final_train": 4845,
+    "n_final_val": 692,
+    "use_projection": false,
+    "ring_flag_value": 1,
+    "model_file": "mbco_best.pt"
+  }
+}

@@ -1,0 +1,1314 @@
+你现在是一名化学信息学、物理有机化学、芳香性理论、Python数据分析和JACS科研绘图专家。
+
+请基于我已经完成的高可信 USPTO dearomatization corpus，对 reaction-level aromaticity change 进行系统分析并生成论文 Fig.5 的正式数据和图片，同时为后续 Fig.6 的 ring/reaction chemical determinants 分析建立数据基础。
+
+本阶段不要再修改筛选器，也不要处理已经失败的46个不完整环对。正式分析数据固定为当前完成的4377个完整 reactant/product target-ring pairs。
+
+==================================================
+一、当前最终输入数据
+==========
+
+项目目录：
+
+/home/ubuntu/aroma-dps-code/uspto-5k/
+
+主要数据目录：
+
+/home/ubuntu/aroma-dps-code/uspto-5k/dearom_ring_pairs_A_tierA/
+
+正式用于分析的文件：
+
+ring_pair_aromaticity_predictions_complete.csv
+
+样本规模：
+
+4377 complete reactant/product target-ring pairs
+
+每个 pair 均已完成：
+
+HOMA prediction
+nMCBO prediction
+NICS(1)zz prediction
+
+并定义：
+
+Delta_HOMA
+= HOMA_R - HOMA_P
+
+Delta_nMCBO
+= nMCBO_R - nMCBO_P
+
+Delta_NICS_star
+= NICS_P - NICS_R
+
+统一约定：
+
+Delta > 0
+代表 aromaticity loss。
+
+当前已知统计：
+
+Delta_HOMA：
+N = 4377
+mean = 2.377
+median = 2.284
+99.6% > 0
+
+Delta_nMCBO：
+N = 4377
+mean = 0.237
+median = 0.251
+98.3% > 0
+
+Delta_NICS_star：
+N = 4377
+mean = 22.65
+median = 25.53
+99.4% > 0
+
+三指标联合：
+
+ALL_LOSS：
+97.4%
+
+ALL_GAIN_OR_NONLOSS：
+0%
+
+DISCORDANT：
+2.6%
+= 114 pairs
+
+另有：
+
+descriptor_discordant_cases.csv
+
+包含114个descriptor不一致案例。
+
+==================================================
+二、本阶段核心科学问题
+===========
+
+Fig.5 不能只是证明：
+
+“去芳构化后芳香性下降。”
+
+因为这是一个过于显然的结论。
+
+真正需要回答的是：
+
+1. 在数千个真实去芳构化反应中，几何、电子离域和磁性芳香性是否都表现出系统性损失？
+
+2. 三类芳香性指标虽然方向高度一致，但变化幅度是否也完全同步？
+
+3. 如果不完全同步，是否说明 dearomatization 是一种 intrinsically multidimensional aromaticity response，而不能简单压缩成单一指标？
+
+4. 那114个 descriptor-discordant reactions 是否对应特殊的环系、特殊化学环境或模型OOD区域？
+
+5. 不同 chemical environments 是否表现出不同大小的 aromaticity loss？
+
+本阶段最终科研逻辑应为：
+
+structurally identified dearomatization
+
+→
+
+quantitative aromaticity loss across 4377 reactions
+
+→
+
+97.4% multidimensional directional concordance
+
+→
+
+but descriptor amplitudes may remain partially decoupled
+
+→
+
+dearomatization should therefore be represented as an aromaticity-change vector rather than assumed to be a trivial binary transformation.
+
+==================================================
+三、首先建立最终分析母表
+============
+
+从：
+
+ring_pair_aromaticity_predictions_complete.csv
+
+读取4377条完整数据。
+
+建立：
+
+reaction_aromaticity_fig5_master.csv
+
+禁止改变pair顺序后再通过行号匹配。
+
+始终使用：
+
+pair_id
+
+作为主键。
+
+母表必须包含：
+
+pair_id
+reaction_id
+
+HOMA_pred_reactant
+HOMA_pred_product
+Delta_HOMA
+
+nMCBO_pred_reactant
+nMCBO_pred_product
+Delta_nMCBO
+
+NICS_1zz_pred_reactant
+NICS_1zz_pred_product
+Delta_NICS_star
+
+aromaticity_pattern
+
+并从原ring pair文件merge：
+
+reactant_component_smiles
+product_component_smiles
+target_ring_map_numbers
+target_ring_size
+lost_aromatic_atoms
+lost_aromatic_ring_edges
+new_sp3_ring_atoms
+new_stereocenters_on_ring
+
+如果某些字段名称略有不同，自动识别，但必须记录实际使用字段。
+
+输出：
+
+01_master/reaction_aromaticity_fig5_master.csv
+
+==================================================
+四、Fig.5a：Corpus与方法流程
+====================
+
+Fig.5a不要画复杂统计图。
+
+画成一个简洁的科学流程schematic：
+
+USPTO_STEREO
+1,002,915 reactions
+
+↓
+
+Fast structural screening
+
+↓
+
+Exact atom-mapped Stage-2 validation
+
+↓
+
+4,306 high-confidence reactions
+
+↓
+
+4,443 target-ring pairs
+
+↓
+
+ML aromaticity prediction
+
+↓
+
+4,377 complete reactant/product pairs
+
+↓
+
+multidimensional aromaticity-change vector
+
+# Delta A
+
+(
+Delta HOMA,
+Delta nMCBO,
+Delta NICS*
+)
+
+右侧放一个代表性反应：
+
+Reactant aromatic target ring
+
+→
+
+Product dearomatized target ring
+
+用同一种醒目颜色圈出反应前后的同一个target ring。
+
+旁边注明：
+
+same atom-mapped ring
+
+不要在Fig.5a突出46个失败pair。
+
+正文Methods或SI写：
+
+46 incomplete pairs were excluded because one side lacked a valid model prediction.
+
+Fig.5a视觉重点是：
+
+large reaction corpus
++
+exact target-ring correspondence
++
+multidimensional prediction。
+
+==================================================
+五、Fig.5b：反应前后芳香性变化
+==================
+
+这是第一张核心数据图。
+
+分别绘制三个并列panel：
+
+HOMA
+
+nMCBO
+
+NICS(1)zz
+
+每个panel展示：
+
+Reactant
+vs
+Product
+
+由于N=4377，不要画4377条连接线。
+
+推荐使用：
+
+violin
++
+box / median-IQR
++
+低透明度散点
+
+或者：
+
+raincloud plot。
+
+必须展示：
+
+median
+
+IQR
+
+并在图中标出：
+
+N = 4377
+
+以及：
+
+median Delta
+
+例如：
+
+HOMA：
+median Delta = 2.284
+
+nMCBO：
+median Delta = 0.251
+
+NICS：
+median Delta NICS* = 25.53
+
+注意：
+
+NICS面板直接显示原始：
+
+NICS_R
+vs
+NICS_P
+
+但annotation中说明：
+
+Delta NICS* = NICS_P - NICS_R
+
+保证：
+
+positive Delta = aromaticity loss。
+
+统计：
+
+paired Wilcoxon signed-rank test
+
+但不要把巨大样本得到的极小p值作为重点。
+
+同时报告：
+
+median difference
+bootstrap 95% CI
+rank-biserial effect size 或合适的paired effect size。
+
+图中最重要的是 effect magnitude，不是p-value。
+
+==================================================
+六、Fig.5c：直接展示 Delta distributions
+=================================
+
+绘制：
+
+Delta_HOMA
+
+Delta_nMCBO
+
+Delta_NICS_star
+
+三个并列distribution。
+
+建议：
+
+violin + density
+
+或者：
+
+histogram + KDE
+
+每个panel必须画：
+
+x = Delta descriptor
+
+垂直参考线：
+
+Delta = 0
+
+并标：
+
+99.6%
+98.3%
+99.4%
+
+分别代表：
+
+fraction with aromaticity loss。
+
+不要把三个descriptor放在同一原始x轴，因为量纲完全不同。
+
+每个panel保留自己的数值范围。
+
+图的视觉信息应该非常清楚：
+
+几乎全部分布都位于：
+
+Delta > 0
+
+区域。
+
+正文可形成：
+
+Across 4,377 structurally validated ring pairs, predicted aromaticity loss occurred in 99.6%, 98.3%, and 99.4% of reactions according to HOMA, nMCBO, and NICS-derived measures, respectively.
+
+注意不要写：
+
+“证明了所有去芳构化必然如此。”
+
+应写：
+
+“within the present corpus”。
+
+==================================================
+七、Fig.5d：三维指标的一致与不一致
+====================
+
+这张图不要只写97.4%。
+
+建议做两个部分。
+
+第一部分：
+
+一个简洁的100% stacked bar：
+
+ALL_LOSS = 97.4%
+
+DISCORDANT = 2.6%
+
+ALL_GAIN_OR_NONLOSS = 0%
+
+也可以使用一条水平比例条，不需要饼图。
+
+第二部分：
+
+绘制三组pairwise relationship：
+
+Delta_HOMA
+vs
+Delta_nMCBO
+
+Delta_HOMA
+vs
+Delta_NICS_star
+
+Delta_nMCBO
+vs
+Delta_NICS_star
+
+由于N=4377：
+
+优先使用：
+
+hexbin
+
+或者：
+
+density scatter
+
+而不是普通大散点。
+
+每张必须计算：
+
+Pearson r
+Spearman rho
+bootstrap 95% CI
+
+保存：
+
+descriptor_pairwise_correlations.csv
+
+此处需要特别判断：
+
+如果：
+
+Delta_HOMA 与 Delta_nMCBO 高度相关
+
+而：
+
+Delta_NICS_star 与前两者明显较弱
+
+则形成重要科学结论：
+
+Geometric and electron-delocalization responses are more strongly coupled, whereas the magnetic aromaticity response retains a partially independent component.
+
+但是：
+
+只有数据支持时才能写。
+
+如果三个都高度相关，则应如实写：
+
+the three aromaticity dimensions are strongly coupled at the reaction scale。
+
+不要提前预设NICS一定独立。
+
+==================================================
+八、Fig.5e：PCA判断是否真的需要“多维”
+========================
+
+对三个Delta标准化：
+
+z_HOMA
+z_nMCBO
+z_NICS
+
+做PCA。
+
+输入：
+
+X =
+[
+z(Delta_HOMA),
+z(Delta_nMCBO),
+z(Delta_NICS_star)
+]
+
+保存：
+
+descriptor_delta_pca_scores.csv
+
+descriptor_delta_pca_loadings.csv
+
+输出：
+
+PC1 explained variance
+PC2 explained variance
+PC3 explained variance
+
+画：
+
+PC1 vs PC2
+
+点不需要按reaction class着色。
+
+先统一灰色。
+
+将：
+
+DISCORDANT
+
+114个样本用另一种marker突出。
+
+同时画loading arrows：
+
+HOMA
+nMCBO
+NICS
+
+科学判断：
+
+如果：
+
+PC1 > 85–90%
+
+则说明：
+
+single consensus coordinate可能具有合理性。
+
+如果：
+
+PC2仍占20–30%以上，
+
+则不要构造唯一 scalar DPS。
+
+此时正文应强调：
+
+multidimensional aromaticity-change vector。
+
+不能为了迎合预期而强行构建DPS。
+
+==================================================
+九、114个 Discordant cases 单独分析
+============================
+
+读取：
+
+descriptor_discordant_cases.csv
+
+为每个样本确定：
+
+到底是哪一个descriptor发生反向。
+
+增加字段：
+
+discordance_type
+
+例如：
+
+HOMA_NEGATIVE_ONLY
+
+nMCBO_NEGATIVE_ONLY
+
+NICS_NEGATIVE_ONLY
+
+HOMA_NICS_NEGATIVE
+
+etc.
+
+统计：
+
+discordance_type_counts.csv
+
+然后建立：
+
+discordance_strength
+
+推荐先标准化三个Delta：
+
+z1,z2,z3
+
+定义：
+
+# discordance_strength
+
+standard deviation(z1,z2,z3)
+
+或：
+
+max(z)-min(z)
+
+用于排序。
+
+输出：
+
+top_50_descriptor_discordant_cases.csv
+
+其中必须包括：
+
+pair_id
+reaction_id
+Reactant_SMILES
+Product_SMILES
+target_ring
+Delta_HOMA
+Delta_nMCBO
+Delta_NICS_star
+discordance_type
+discordance_strength
+
+这50条后续优先：
+
+人工检查
+DFT验证
+OOD检查。
+
+不要把discordant case从主数据里删除。
+
+==================================================
+十、Chemical Space：先分析 target-ring-centered space
+===============================================
+
+chemical space必须首先围绕：
+
+target ring + local environment
+
+而不是整个分子。
+
+使用每个Reactant target ring为对象。
+
+建议构建：
+
+radius-2 local environment fingerprint。
+
+如果已有：
+
+reactant_radius2_atom_indices
+
+优先使用。
+
+否则从：
+
+target atom indices
+
+向外扩2个graph hops。
+
+计算：
+
+Morgan fingerprint
+
+建议：
+
+radius = 2
+nBits = 2048
+
+但是需要明确：
+
+这里是target-centered local subgraph fingerprint。
+
+然后：
+
+PCA → 50D
+
+再：
+
+UMAP → 2D
+
+参数建议先固定：
+
+n_neighbors = 30
+min_dist = 0.15
+metric = jaccard 或适合binary fingerprint的距离
+
+random_state固定。
+
+不得反复修改UMAP参数以获得“漂亮分群”。
+
+输出：
+
+target_ring_chemical_space.csv
+
+字段：
+
+pair_id
+UMAP1
+UMAP2
+Delta_HOMA
+Delta_nMCBO
+Delta_NICS_star
+aromaticity_pattern
+
+==================================================
+十一、Chemical Space 图如何呈现
+=======================
+
+先做四张版本用于分析：
+
+A：
+
+所有点统一颜色。
+
+看coverage和density。
+
+B：
+
+颜色 = Delta_HOMA
+
+C：
+
+颜色 = Delta_nMCBO
+
+D：
+
+颜色 = Delta_NICS_star
+
+使用连续色条。
+
+注意：
+
+三个descriptor必须分别使用自己的robust color range。
+
+推荐：
+
+2.5th–97.5th percentile
+
+避免少量outlier压缩色阶。
+
+第五张：
+
+将：
+
+ALL_LOSS
+
+统一灰色
+
+DISCORDANT
+
+高亮。
+
+观察114个discordant cases是否集中在某些chemical-space区域。
+
+如果明显成簇：
+
+这是非常重要的发现。
+
+如果完全随机分布：
+
+也如实记录。
+
+==================================================
+十二、不要用UMAP距离做定量结论
+=================
+
+禁止：
+
+“UMAP上距离更远，所以结构变化更大。”
+
+UMAP只用于可视化。
+
+真正structural similarity必须直接使用fingerprint Tanimoto。
+
+==================================================
+十三、Reactant–Product structural change
+=====================================
+
+对每个pair计算：
+
+MorganFP_R
+
+MorganFP_P
+
+whole molecular component：
+
+radius=2
+2048 bits
+
+计算：
+
+Tanimoto_RP
+
+定义：
+
+# StructuralChange
+
+1 - Tanimoto_RP
+
+然后分别研究：
+
+StructuralChange
+vs
+Delta_HOMA
+
+StructuralChange
+vs
+Delta_nMCBO
+
+StructuralChange
+vs
+Delta_NICS_star
+
+绘制：
+
+hexbin / density scatter
+
+同时计算：
+
+Pearson
+Spearman
+
+如果关系弱：
+
+不要强行拟合线性趋势。
+
+结论可为：
+
+overall molecular structural change is not equivalent to target-ring aromaticity loss。
+
+这个结果如果成立，会很好地支持target-ring-aware方法。
+
+==================================================
+十四、Initial aromaticity 与 Delta aromaticity
+==========================================
+
+研究：
+
+HOMA_R
+vs
+Delta_HOMA
+
+nMCBO_R
+vs
+Delta_nMCBO
+
+-NICS_R
+vs
+Delta_NICS_star
+
+但是必须注意数学耦合：
+
+因为：
+
+# Delta
+
+A_R - A_P
+
+所以Delta中天然包含A_R。
+
+不能只报告简单相关。
+
+必须额外做：
+
+A_R vs A_P
+
+以及至少一种：
+
+residual analysis
+或
+partial correlation
+
+例如：
+
+先对A_P ~ A_R拟合，
+
+分析residual是否受到ring family/structural change影响。
+
+目标：
+
+判断 initial aromaticity 是否真的具有独立解释力。
+
+==================================================
+十五、Ring Family 分类准备
+===================
+
+Fig.5 chemical space阶段先做ring family分类，但不要立即做reaction mechanism分类。
+
+自动识别主要target-ring families：
+
+benzene
+phenol-type
+naphthalene
+naphthol-type
+
+pyrrole
+indole
+
+furan
+benzofuran
+
+thiophene
+benzothiophene
+
+pyridine
+quinoline
+isoquinoline
+
+other N-heteroarene
+other O-heteroarene
+other S-heteroarene
+other carbocycle
+unknown
+
+分类依据必须综合：
+
+target ring atom composition
+
+fused environment
+
+邻接环
+
+直接取代环境。
+
+不能仅仅：
+
+C5N = indole
+
+因为孤立pyrrole和indole五元环不能混淆。
+
+输出：
+
+ring_family_annotations.csv
+
+和：
+
+ring_family_counts.csv
+
+只有：
+
+n >= 20
+
+的主要family进入Fig.5/6正文。
+
+n小的放：
+
+Other
+
+或SI。
+
+==================================================
+十六、推荐的 Fig.5 最终排版
+=================
+
+最终正文 Fig.5 建议采用：
+
+---
+
+Fig.5a
+Corpus + target-ring workflow
+-----------------------------
+
+1,002,915
+
+→ structural screening
+
+→ exact atom mapping
+
+→ 4306 reactions
+
+→ 4443 ring pairs
+
+→ 4377 complete predictions
+
+→ Delta A vector
+
+这是概念图。
+
+---
+
+Fig.5b
+Reactant vs Product aromaticity
+-------------------------------
+
+三个小panel：
+
+HOMA
+
+nMCBO
+
+NICS(1)zz
+
+重点展示大规模整体变化。
+
+---
+
+Fig.5c
+Delta distributions
+-------------------
+
+三个小panel：
+
+Delta_HOMA
+
+Delta_nMCBO
+
+Delta_NICS*
+
+标：
+
+99.6%
+98.3%
+99.4%
+
+---
+
+Fig.5d
+Descriptor concordance + coupling
+---------------------------------
+
+左：
+
+97.4% ALL_LOSS
+2.6% DISCORDANT
+0% ALL_GAIN
+
+右：
+
+Delta descriptor correlation matrix
+
+或2–3张最关键hexbin。
+
+---
+
+Fig.5e
+Multidimensional PCA
+--------------------
+
+PC1 vs PC2
+
+ALL_LOSS灰色
+
+DISCORDANT高亮
+
+附loadings。
+
+---
+
+Fig.5f
+Target-ring chemical space
+--------------------------
+
+UMAP
+
+颜色可优先用：
+
+Delta_HOMA
+
+如果版面允许：
+
+旁边用三个小UMAP分别着色三个Delta。
+
+如果正文版面不足：
+
+只保留最具有代表性的一个，
+
+其他放SI。
+
+==================================================
+十七、Fig.5正文需要形成的结论层级
+===================
+
+第一层：
+
+结构筛选得到的去芳构化事件，在4377个真实反应中表现出非常稳定的定量芳香性损失。
+
+支持数据：
+
+99.6%
+98.3%
+99.4%
+
+第二层：
+
+97.4%的reaction在几何、电子和磁性三个维度同时显示芳香性下降。
+
+支持：
+
+ALL_LOSS = 97.4%
+
+第三层：
+
+方向一致不代表变化幅度完全一致。
+
+由：
+
+pairwise correlation
++
+PCA
+
+判断是否存在多维响应。
+
+第四层：
+
+少数2.6% descriptor-discordant reactions不是直接视为错误，而是作为：
+
+model OOD
+special aromaticity response
+unusual ring chemistry
+
+的候选集合。
+
+第五层：
+
+target-ring chemical space中，如果Delta存在结构化分布，则说明芳香性损失与局部化学环境有关，为Fig.6的ring/reaction determinants铺垫。
+
+==================================================
+十八、Fig.5现在不要做的事情
+================
+
+暂时不要：
+
+1. 强行建立唯一Dearomatization Score。
+2. 宣称reaction mechanism控制Delta。
+3. 根据USPTO reaction SMILES强行判断photochemical/radical。
+4. 把114个discordant case删除。
+5. 把UMAP坐标距离作为chemical distance。
+6. 因为p值很小就声称effect很强。
+7. 直接说模型预测等同DFT真值。
+8. 直接说“97.4%证明Stage-2正确”。
+
+更严谨表述：
+
+The quantitative predictions are highly consistent with the structurally defined dearomatization labels.
+
+==================================================
+十九、SI需要同时准备
+===========
+
+主文Fig.5只保留最核心的信息。
+
+SI输出：
+
+S1：
+三descriptor完整Reactant/Product distribution
+
+S2：
+三Delta histogram
+
+S3：
+完整Pearson/Spearman matrix
+
+S4：
+PCA loadings
+
+S5：
+114 discordant cases chemical-space plot
+
+S6：
+Top 50 discordant structures
+
+S7：
+prediction failure summary，说明46 incomplete pairs如何排除
+
+S8：
+ring family sample counts
+
+S9：
+whole-molecule UMAP
+
+S10：
+target-centered UMAP不同参数稳定性检查
+
+==================================================
+二十、图形要求
+=======
+
+全部输出：
+
+PDF
+SVG
+PNG 600 dpi
+
+同时保存：
+
+plot_data.csv
+
+图中字体统一：
+
+Arial / Helvetica
+
+最终正文大小：
+
+7–9 pt
+
+不要：
+
+3D bar
+pie chart
+rainbow colormap
+过度装饰
+大量粗网格线
+
+大样本散点：
+
+使用：
+
+alpha
+hexbin
+density
+
+连续变量配色：
+
+使用感知均匀的continuous colormap。
+
+不得因为“漂亮”调整数据范围。
+
+只允许robust clipping用于颜色显示，并明确保留原始数值。
+
+==================================================
+二十一、最终输出目录
+==========
+
+建立：
+
+/home/ubuntu/aroma-dps-code/uspto-5k/fig5_analysis/
+
+结构：
+
+01_master/
+02_global_change/
+03_descriptor_coupling/
+04_pca/
+05_discordant/
+06_chemical_space/
+07_ring_family/
+08_statistics/
+09_fig5_main/
+10_fig5_si/
+logs/
+
+必须生成：
+
+reaction_aromaticity_fig5_master.csv
+
+global_delta_summary.csv
+
+paired_aromaticity_statistics.csv
+
+descriptor_pairwise_correlations.csv
+
+descriptor_delta_pca_scores.csv
+descriptor_delta_pca_loadings.csv
+
+discordance_type_counts.csv
+top_50_descriptor_discordant_cases.csv
+
+target_ring_chemical_space.csv
+
+reactant_product_structural_change.csv
+
+ring_family_annotations.csv
+ring_family_counts.csv
+
+Fig5a.pdf/svg/png
+Fig5b.pdf/svg/png
+Fig5c.pdf/svg/png
+Fig5d.pdf/svg/png
+Fig5e.pdf/svg/png
+Fig5f.pdf/svg/png
+
+以及：
+
+FIG5_ANALYSIS_REPORT.md
+
+==================================================
+二十二、最终报告必须明确回答
+==============
+
+最终不要只汇报“图画好了”。
+
+必须回答：
+
+1. 三个descriptor各自的芳香性损失分布是多少？
+2. 97.4% ALL_LOSS是否在不同ring families中都成立？
+3. 三个Delta之间Pearson/Spearman具体是多少？
+4. PCA中PC1/PC2分别解释多少variance？
+5. 数据是否支持single scalar dearomatization score？
+6. 114个discordant cases主要由哪个descriptor造成？
+7. discordant cases是否集中在特定chemical space？
+8. initial aromaticity是否与loss相关？
+9. overall molecular structural change是否与target-ring aromaticity loss相关？
+10. 哪些结果已经足够进入JACS正文？
+11. 哪些仍然只能作为待验证假设？
+12. 哪些异常reaction最值得进一步做DFT？
+
+任何结论必须由实际结果决定，不得提前预设。

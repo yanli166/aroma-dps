@@ -1,0 +1,916 @@
+你现在需要为一个面向 JACS 的芳香性/去芳构化项目开发新的 Fig.6。请不要只生成示意图，而是先完成数据检查、统计分析、候选图生成，并输出一份 Fig.6 分析报告。
+
+==============================
+一、科学定位
+==============================
+
+当前论文结构已经冻结为：
+
+Fig.1 Concept
+Fig.2 Quantum-chemical reference dataset
+Fig.3 Target-ring-conditioned prediction
+Fig.4 Chemical OOD/generalization
+Fig.5 Curated real-reaction DFT validation
+Fig.6 USPTO-scale ML-enabled chemical discovery
+
+因此新的 Fig.6 不再负责证明模型预测准确；Fig.5 已经负责 DFT reaction validation。
+
+Fig.6 必须回答：
+
+“What becomes chemically visible only after scaling ring-resolved aromaticity analysis to thousands of real reactions?”
+
+核心叙事：
+
+Scale
+→ localization
+→ robust aromaticity loss
+→ chemical heterogeneity
+→ chemical determinants / exceptions
+
+避免写：
+“DFT cannot calculate these systems.”
+
+正确表述应该是：
+“ML enables systematic, reaction-scale aromaticity analysis that would be computationally burdensome by routine quantum-chemical workflows.”
+
+==============================
+二、已知数据和路径
+==============================
+
+项目根目录优先检查：
+
+/home/ubuntu/aroma-dps-code/uspto-5k/
+
+target-ring 正式结果目录：
+
+/home/ubuntu/aroma-dps-code/uspto-5k/dearom_ring_pairs_A_tierA/
+
+主要正式结果文件：
+
+ring_pair_aromaticity_predictions_complete.csv
+
+预计包含：
+4377 complete reactant/product target-ring pairs
+
+pair_id 是唯一主键：
+1 pair_id = 1 reaction × 1 target ring
+
+不要重新使用旧的错误 atom indices。
+
+如果需要重新构建模型输入，必须使用：
+
+smiles_model
+target_atom_indices_model
+
+而不是：
+smiles
+target_atom_indices
+
+模型包：
+
+/home/ubuntu/aroma-dps-code/best_model_package/
+
+已有 fixed prediction pipeline：
+predict_ring_properties_fixed.py
+
+全环数据目录可能为：
+
+/home/ubuntu/aroma-dps-code/uspto-5k/dearom_ring_pairs_A/
+
+或者已经重命名为：
+dearom_ring_pairs_A_allrings/
+
+其中此前统计：
+A = 4443 target rings
+R = 5722 retained/spectator rings
+B = 16
+C = 40
+
+如果 spectator rings 尚无芳香性预测：
+不要训练新模型。
+使用 frozen final model 和 corrected atom indices 对 spectator reactant/product rings 进行预测。
+
+==============================
+三、统一芳香性损失定义
+==============================
+
+全文统一：
+
+L > 0 = aromaticity loss
+
+定义：
+
+L_HOMA = HOMA_R - HOMA_P
+
+L_nMCBO = nMCBO_R - nMCBO_P
+
+L_NICS = NICS_P - NICS_R
+
+注意：
+NICS 的方向与 HOMA/nMCBO 相反，因此使用上面的定义后，三个 descriptor 的正值都表示 aromaticity loss。
+
+不要构造单一 DPS scalar。
+
+保留：
+
+L_A = [L_HOMA, L_nMCBO, L_NICS]
+
+==============================
+四、数据完整性和 QC
+==============================
+
+先输出：
+
+Fig6_DATA_AUDIT.md
+
+必须确认：
+
+1. target pair 数；
+2. unique reaction 数；
+3. 每个 reaction 是否存在多个 target rings；
+4. spectator ring 数；
+5. target/spectator 是否均有完整 R/P prediction；
+6. HOMA / NICS / nMCBO 是否有 NaN/inf；
+7. pair_id 是否唯一；
+8. reaction_id 是否可用于 clustered analysis；
+9. 是否仍有 canonicalization/index mismatch；
+10. 每个 target ring family 的 n。
+
+禁止静默删除异常值。
+
+所有删除必须生成：
+excluded_records.csv
+并解释 reason。
+
+==============================
+五、Panel 6a：reaction-mining scale-up pipeline
+==============================
+
+生成一个用于 Fig.6a 的数据 summary 和示意图。
+
+主流程：
+
+USPTO_STEREO
+~1,002,915 reactions
+
+→ high-recall reaction screening
+
+→ atom-mapped target-ring tracking
+   • same ring atoms tracked through reaction
+   • ring topology retention
+   • aromatic atom/bond loss
+   • local reaction-center evidence
+
+→ 4306 Tier-A reactions
+→ 4443 true target-ring pairs
+
+→ frozen RC-GNN prediction of reactant/product ring properties
+
+→ 4377 complete quantitative target-ring pairs
+
+同时从 Tier-A reactions 分支：
+
+all rings
+→ retained/spectator rings
+→ internal control dataset
+
+图中不要堆砌 P0/P1/P2/P3 全部数字，主图只保留最有意义的数字。
+完整 screening statistics 可以输出 SI。
+
+输出：
+Fig6a_pipeline.svg
+Fig6a_pipeline.pdf
+Fig6a_pipeline.png (600 dpi)
+
+==============================
+六、Panel 6b：target vs spectator ring internal control
+==============================
+
+这是高优先级分析。
+
+问题：
+
+Is aromaticity loss localized to the chemically transformed target ring?
+
+对每个 reaction：
+
+target ring:
+L_target
+
+spectator rings:
+如果同一 reaction 有多个 spectator rings，
+先计算 descriptor-specific median spectator loss：
+
+median(L_spectator | reaction)
+
+然后 target 与 spectator 做 within-reaction comparison。
+
+如果同一 reaction 有多个 target rings：
+保留所有 target pair，但统计 CI 时必须以 reaction_id clustered bootstrap，
+避免 pseudoreplication。
+
+分别分析：
+
+L_HOMA
+L_nMCBO
+L_NICS
+
+推荐图型：
+paired dot/slope + half violin，
+左 spectator，
+右 target。
+
+报告：
+
+N reactions
+median target
+median spectator
+median paired difference
+bootstrap 95% CI
+Cliff’s delta 或其他 robust effect size
+
+不要把重点放在 p-value 星号。
+
+如果 spectator prediction 尚未生成，请自动生成，但必须使用 frozen model，不允许重新训练。
+
+输出：
+
+fig6b_target_spectator_stats.csv
+Fig6b_target_vs_spectator.svg/pdf/png
+
+==============================
+七、Panel 6c：global aromaticity-loss landscape
+==============================
+
+使用全部 4377 complete target-ring pairs。
+
+分别画三张紧凑的 raincloud / density + box：
+
+L_HOMA
+L_nMCBO
+L_NICS
+
+每张：
+画 L=0 虚线。
+
+报告：
+median
+IQR
+fraction L>0
+
+当前已知结果约为：
+
+HOMA:
+median ≈ 2.284
+loss ≈ 99.6%
+
+nMCBO:
+median ≈ 0.251
+loss ≈ 98.3%
+
+NICS:
+median ≈ 25.53 ppm
+loss ≈ 99.4%
+
+请以实际 CSV 重新计算，不要硬编码这些值。
+
+另外生成一条横向 stacked bar：
+
+ALL THREE LOSS
+DESCRIPTOR-DISCORDANT
+
+当前约：
+97.4% vs 2.6%
+
+仍须从数据重新计算。
+
+主图语言：
+
+“Dearomatization is directionally robust across geometric, electronic, and magnetic diagnostics.”
+
+不要写：
+“the three descriptors are equivalent.”
+
+输出：
+fig6c_global_loss_stats.csv
+Fig6c_global_loss.svg/pdf/png
+
+==============================
+八、Target-ring-family classification
+==============================
+
+这是后续 Panel d/e 的基础。
+
+分类对象必须是：
+
+actual dearomatized target ring
+
+而不是 whole molecule。
+
+候选 family：
+
+benzene-type
+phenol-type
+naphthalene-type
+naphthol-type
+
+pyrrole-type
+indole-type
+
+furan-type
+benzofuran-type
+
+thiophene-type
+benzothiophene-type
+
+pyridine-type
+quinoline-type
+isoquinoline-type
+
+other N-heteroarene
+other O-heteroarene
+other S-heteroarene
+other carbocycle
+unknown
+
+分类不能仅通过：
+target ring element composition
+
+例如 C4N 不一定是 pyrrole；
+indole 的五元环同样可能是 C4N。
+
+必须结合：
+
+target-ring atom identities
+ring size
+fused environment
+neighboring rings
+heteroatom pattern
+substitution context
+
+请实现可复现 rule-based classification，并生成：
+
+ring_family_assignment.csv
+
+字段至少：
+
+pair_id
+reaction_id
+ring_family
+ring_size
+heteroatom_pattern
+is_fused
+neighbor_ring_types
+classification_rule
+confidence
+
+随机人工审计建议：
+每个主要 family 至少抽 20 个结构，
+生成 contact sheet / structure grid 便于人工检查。
+
+如果某 family 分类置信度低，
+不要强行进入正文。
+
+==============================
+九、Panel 6d：ring-family-dependent aromaticity response
+==============================
+
+同时生成两种候选版本。
+
+VERSION D1 — raw distributions
+
+只选主样本量足够的 families。
+建议主图阈值：
+n >= 30
+或根据实际样本量调整。
+
+三个 descriptor 分开：
+
+L_HOMA
+L_nMCBO
+L_NICS
+
+图型：
+violin + box + jitter
+或 raincloud。
+
+必须保留 raw physical units。
+
+VERSION D2 — multidimensional fingerprint heatmap
+
+所有主要 family 为 rows：
+
+columns:
+HOMA
+nMCBO
+NICS
+
+不要直接用三种 raw median 混在一个颜色尺度。
+
+使用 robust standardized response：
+
+z_robust =
+(family_median - global_median) /
+(1.4826 * global_MAD)
+
+颜色中心固定 0。
+
+>0:
+above-average aromaticity loss
+
+<0:
+below-average aromaticity loss
+
+每行同时标注 n。
+
+输出：
+
+ring_family_descriptor_summary.csv
+Fig6d_raw_family_distributions.svg
+Fig6d_family_fingerprint_heatmap.svg
+
+以及 pdf/png。
+
+==============================
+十、Panel 6e：whole-molecule structural change vs local aromaticity loss
+==============================
+
+测试：
+
+Does a larger global molecular transformation imply larger target-ring aromaticity loss?
+
+不要使用：
+UMAP distance
+t-SNE distance
+
+真正 structural-change metric 使用：
+
+Morgan fingerprint
+radius = 2
+nBits = 2048
+
+StructuralChange =
+1 - Tanimoto(Reactant, Product)
+
+Reactant/Product 均使用完整 molecular structure，
+确保盐、mapping 等预处理一致。
+
+分别分析：
+
+StructuralChange vs L_HOMA
+StructuralChange vs L_nMCBO
+StructuralChange vs L_NICS
+
+画：
+scatter / hexbin + LOWESS 或 robust linear trend
+
+报告：
+
+Pearson r
+Spearman rho
+bootstrap CI
+
+已知早期结果是：
+|r| approximately <= 0.04
+
+必须重新从正式数据确认。
+
+如果结果仍接近 0：
+
+main conclusion：
+
+“Global structural perturbation is a poor proxy for local aromaticity loss.”
+
+输出：
+
+structural_change_vs_loss.csv
+Fig6e_structural_decoupling.svg/pdf/png
+
+==============================
+十一、Panel 6f-A：descriptor-discordant chemistry
+==============================
+
+已有文件：
+
+descriptor_discordant_cases.csv
+
+预计：
+114 / 4377 ≈ 2.6%
+
+其中 nMCBO_NEGATIVE_ONLY 曾约：
+73 / 114
+
+请重新统计。
+
+分析 discordant cases 是否富集于：
+
+ring_family
+ring_size
+fused vs isolated
+heteroatom pattern
+initial aromaticity
+StructuralChange
+reaction topology
+model uncertainty / OOD proxy
+
+对每个分类做：
+
+observed fraction
+background fraction
+odds ratio
+bootstrap / Fisher exact where appropriate
+FDR correction
+
+不要为了显著性硬找 pattern。
+
+按照：
+discordance magnitude
+
+定义一个排序，例如：
+
+D =
+max standardized descriptor disagreement
+或
+distance from all-loss octant
+
+挑选 top representative cases。
+
+生成 3–6 个代表性：
+Reactant → Product
+
+并标：
+
+L_HOMA
+L_NICS
+L_nMCBO
+
+特别寻找：
+
+HOMA loss + NICS loss
+but nMCBO retained/increased
+
+或其他真正 descriptor-decoupled cases。
+
+输出：
+
+discordant_enrichment.csv
+discordant_top_cases.csv
+Fig6fA_discordant_cases.svg/pdf/png
+
+如果没有明确化学 pattern：
+把该 panel 降级 SI。
+
+==============================
+十二、增强版：reaction-family / reaction-topology classification
+==============================
+
+这是高风险高收益分析。
+
+目标不是从 USPTO 猜真实 mechanism。
+
+不要把 reaction 自动命名成：
+photochemical
+catalytic hydrogenation
+allylic dearomatization
+除非元数据确实支持。
+
+优先按照 atom-mapped reaction-center topology 分类。
+
+候选 conservative labels：
+
+reduction-like
+single-addition-like
+multi-addition/cycloaddition-like
+rearrangement-like
+complex/other
+
+示例原则：
+
+reduction-like：
+target ring aromatic/bond order下降，
+但没有新的 heavy-atom bond 加到 target ring。
+
+single-addition-like：
+target ring 新增 1 个 heavy-atom sigma bond。
+
+multi-addition/cycloaddition-like：
+target ring 涉及 >=2 个新的 heavy-atom bonds。
+
+其余：
+complex / other。
+
+不要根据单个 SMARTS 就宣布 mechanism。
+
+每类必须：
+随机抽至少 50 reactions 做结构 contact sheet，
+人工 audit。
+
+如果主分类 precision 明显低于约90%，
+不要用于 Fig.6 main text。
+
+输出：
+
+reaction_family_assignment.csv
+reaction_family_audit_report.md
+reaction_family_contact_sheets/
+
+==============================
+十三、增强 Panel 6d/6e：Ring × Reaction
+==============================
+
+如果 reaction-family classification 足够可靠：
+
+生成：
+
+Ring family × Reaction family
+
+对：
+
+L_HOMA
+L_nMCBO
+L_NICS
+
+分别计算：
+
+median
+IQR
+bootstrap 95% CI
+n
+
+只显示：
+cell n >= 15 或 20
+否则留白/灰色。
+
+生成两种候选图：
+
+1.
+three descriptor heatmaps
+
+2.
+一个 standardized multidimensional heatmap
+
+不要把低样本 cell 的极端 median 当结论。
+
+另外尝试两个 controlled slices：
+
+Slice A:
+fixed reaction topology
+→ compare ring families
+
+Slice B:
+fixed ring family
+→ compare reaction topologies
+
+优先选择：
+样本量大且组间 balanced 的 combination。
+
+语言必须 descriptive：
+
+“occupies a distinct aromaticity-response regime”
+
+不要写：
+“reaction mechanism causes ...”
+
+==============================
+十四、增强 Panel 6f-B：variance decomposition
+==============================
+
+如果 Ring × Reaction 数据足够：
+
+对每个 descriptor 分别拟合：
+
+L ~ RingFamily + ReactionFamily + RingFamily:ReactionFamily
+
+要求：
+使用 robust / bootstrap inference。
+
+不要以普通 p-value 为主。
+
+优先报告：
+
+cross-validated explained variance
+partial R²
+或 bootstrap variance fractions
+
+回答：
+
+How much of the heterogeneity in aromaticity loss is associated with:
+
+Ring identity?
+Reaction topology?
+Their interaction?
+
+如果 interaction cell 太稀疏：
+先只做：
+
+L ~ RingFamily + ReactionFamily
+
+并把 interaction 放 SI。
+
+如果统计稳定，
+生成一张非常简洁的 variance partition 图：
+
+HOMA
+NICS
+nMCBO
+
+每个 descriptor 显示：
+
+Ring
+Reaction
+Interaction
+Residual
+
+注意：
+这是 descriptive variance decomposition，
+不能写成 causal decomposition。
+
+输出：
+
+variance_decomposition.csv
+Fig6fB_variance_decomposition.svg/pdf/png
+
+==============================
+十五、额外 exploratory analyses，只做候选，不默认放正文
+==============================
+
+请额外尝试：
+
+A.
+Initial aromaticity vs aromaticity loss
+
+HOMA_R vs L_HOMA
+nMCBO_R vs L_nMCBO
+-NICS_R vs L_NICS
+
+B.
+descriptor pairwise relationships
+
+L_HOMA vs L_nMCBO
+L_HOMA vs L_NICS
+L_nMCBO vs L_NICS
+
+C.
+PCA of standardized aromaticity-loss vector
+
+已有旧结果约：
+PC1 ≈ 70.5%
+PC2 ≈ 19.4%
+
+重新计算。
+
+D.
+chemical-space embedding
+
+只作为 SI 优先。
+不要把 UMAP/t-SNE 距离解释为 quantitative chemical distance。
+
+==============================
+十六、统计规范
+==============================
+
+所有正式图：
+
+优先：
+median
+IQR
+bootstrap 95% CI
+
+多 ring / 多 pair 属于同一 reaction 时：
+cluster bootstrap by reaction_id。
+
+避免 pseudoreplication。
+
+多重检验：
+Benjamini-Hochberg FDR。
+
+不要只报：
+p < 0.0001
+
+对于 4377 大样本，
+effect size 比 p-value 更重要。
+
+主要 family 主图建议要求：
+n >= 30
+
+Ring × Reaction cells：
+建议 n >= 15–20。
+
+低样本类别保留 SI。
+
+==============================
+十七、图形设计
+==============================
+
+整体风格：
+JACS / ACS manuscript-ready
+white background
+clean sans-serif
+no decorative gradients
+no cartoon-like icons
+
+统一颜色：
+
+HOMA = blue
+NICS = purple
+nMCBO = green
+
+target ring =
+colored / filled
+
+spectator ring =
+gray
+
+reaction mining / scale =
+orange or dark neutral accent
+
+所有图：
+SVG
+PDF
+PNG 600 dpi
+
+不要用 pie chart。
+
+不要用大量 bar chart。
+
+优先：
+raincloud
+violin
+paired dots
+heatmap
+scatter/hexbin
+point + CI
+
+==============================
+十八、最终需要给我的结果
+==============================
+
+建立目录：
+
+/home/ubuntu/aroma-dps-code/uspto-5k/fig6_analysis_v2/
+
+包含：
+
+DATA_AUDIT/
+PANEL_A_PIPELINE/
+PANEL_B_TARGET_SPECTATOR/
+PANEL_C_GLOBAL_LOSS/
+PANEL_D_RING_FAMILY/
+PANEL_E_STRUCTURAL_CHANGE/
+PANEL_F_DISCORDANT/
+REACTION_FAMILY_OPTIONAL/
+VARIANCE_DECOMPOSITION_OPTIONAL/
+SI/
+REPORT/
+
+最终必须生成：
+
+FIG6_ANALYSIS_REPORT.md
+
+报告中按以下格式总结每一个候选 panel：
+
+Scientific question
+Data used
+N
+Method
+Main numerical result
+Possible interpretation
+Possible confounder
+Recommended: MAIN / SI / DROP
+
+最后给出两个 Fig.6 montage：
+
+Fig6_CORE_candidate.png/svg/pdf
+
+包含：
+a pipeline
+b target vs spectator
+c global loss
+d ring-family fingerprint
+e structural decoupling
+f discordant cases
+
+以及：
+
+Fig6_ENHANCED_candidate.png/svg/pdf
+
+如果 reaction family 分类可靠，则包含：
+a pipeline
+b target vs spectator
+c global loss
+d Ring × Reaction heatmap
+e fixed-reaction / fixed-ring controlled slices
+f variance decomposition
+
+不要根据“图好不好看”选最终版本。
+
+按照：
+scientific novelty
+chemical interpretability
+statistical robustness
+JACS reviewer defensibility
+
+排序。
+
+最后在 REPORT 中明确推荐：
+CORE 或 ENHANCED 作为正文 Fig.6。

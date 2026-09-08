@@ -1,20 +1,17 @@
-"""
-Graph construction: single source of truth.
+"""Graph construction: single source of truth.
 
-Consolidates logic from:
-- unified_models/common/graphs.py::process_and_save_data (upstream source)
-- 0831-end-code/common/graph_data.py (load_adj_format, load_pyg_format)
-
-The canonical implementation is process_and_save_data in unified_models.
-This module re-exports it for the publication package.
+Vendored implementations now live in this package:
+- graphs.py     : process_and_save_data + Graph/GraphData (from unified_models/common/graphs.py)
+- graph_data.py : load_adj_format / load_pyg_format + aromaticity ablation
+                  (from 0831-end-code/common/graph_data.py)
 """
-# Re-export from the upstream source (no code duplication)
-try:
-    from unified_models.common.graphs import process_and_save_data
-except ImportError:
-    # When unified_models is not on path, provide a clear error
-    def process_and_save_data(*args, **kwargs):
-        raise ImportError(
-            "process_and_save_data is in unified_models.common.graphs. "
-            "Ensure unified_models is on PYTHONPATH or installed."
-        )
+from aroma_dps.featurization.graphs import (
+    Graph,
+    GraphData,
+    collate_graph_dataset,
+    process_and_save_data,
+)
+from aroma_dps.featurization.graph_data import load_adj_format, load_pyg_format
+
+__all__ = ['process_and_save_data', 'Graph', 'GraphData', 'collate_graph_dataset',
+           'load_adj_format', 'load_pyg_format']

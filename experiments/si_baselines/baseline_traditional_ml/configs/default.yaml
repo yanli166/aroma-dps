@@ -1,0 +1,39 @@
+# 第一层: 传统机器学习基线实验配置
+layer: 1
+name: baseline_traditional_ml
+
+# 输入特征
+features:
+  type: MACCS + Morgan fingerprints
+  maccs_dim: 167
+  morgan_bits: 2048
+  morgan_radius: 2
+  total_dim: 2215
+
+# 模型列表 (9个)
+models:
+  - CatBoost        # iterations=800, depth=8, lr=0.05
+  - RandomForest    # n_est=500, max_depth=20
+  - SVM             # SVR, C=10, gamma=scale, epsilon=0.05
+  - LightGBM        # n_est=600, num_leaves=63, lr=0.05
+  - XGBoost         # n_est=600, max_depth=8, lr=0.05
+  - ExtraTrees      # n_est=500, max_depth=20
+  - Ridge           # alpha=1.0
+  - KRR             # KernelRidge, rbf, alpha=1.0, gamma=0.01
+  - MLP             # (256,128), relu, adam, early_stopping
+
+# 任务 (三任务, 与二三层一致)
+tasks: [HOMA, NICS_1zz, MBCO]
+
+# 数据划分 (规范, 三层共用)
+split:
+  method: 8/2 holdout + 5-fold CV
+  test_size: 0.2
+  n_folds: 5
+  seed: 42
+
+# 评估指标
+metrics: [R2, MAE, RMSE]
+
+# 标准化
+standardize: StandardScaler (fit on train, apply to val/test)

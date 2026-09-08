@@ -37,19 +37,19 @@ while not _os.path.exists(_os.path.join(_d, 'unified_models')) and _d != '/':
 _PROJ_ROOT = _d
 # --- End auto path bootstrap ---
 
-PROJ_ROOT = "_PROJ_ROOT"
-CODE_END = f"{PROJ_ROOT}/code_end"
+PROJ_ROOT = _PROJ_ROOT
+CODE_END = f"{PROJ_ROOT}/archive/deprecated/code_end"
 for p in (PROJ_ROOT, CODE_END):
     if Path(p).exists() and p not in sys.path:
         sys.path.insert(0, p)
 
-FIG4_ROOT = Path("_PROJ_ROOT/0901-end-code/fig4_lunci10")
-AUDIT_OUT = Path("_PROJ_ROOT/0901-end-code/results/fig4_lunci10_final/00_audit")
+FIG4_ROOT = Path(_PROJ_ROOT) / "0901-end-code/fig4_lunci10"
+AUDIT_OUT = Path(_PROJ_ROOT) / "0901-end-code/results/fig4_lunci10_final/00_audit"
 MANIFEST_PATH = AUDIT_OUT / "lunci10_manifest.csv"
 OVERLAP_PATH = AUDIT_OUT / "lunci10_overlap_audit.csv"
-PRED_CSV = Path("_PROJ_ROOT/0901-end-code/results/fig4_lunci10_final/01_external_absolute/lunci10_absolute_predictions.csv")
+PRED_CSV = Path(_PROJ_ROOT) / "0901-end-code/results/fig4_lunci10_final/01_external_absolute/lunci10_absolute_predictions.csv"
 
-OUT_DIR = Path("_PROJ_ROOT/0901-end-code/results/fig4_lunci10_final/02_novelty")
+OUT_DIR = Path(_PROJ_ROOT) / "0901-end-code/results/fig4_lunci10_final/02_novelty"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 CATEGORY_SUMMARY_CSV = OUT_DIR / "novelty_category_summary.csv"
 NEAREST_NEIGHBOR_CSV = OUT_DIR / "nearest_neighbor_analysis.csv"
@@ -90,9 +90,9 @@ def load_internal_smiles_fingerprints(
     from rdkit.Chem import AllChem
     RDLogger.DisableLog("rdApp.*")
     paths = [
-        Path("_PROJ_ROOT + "/code_end"/data1_end/collet_homa_0716.csv"),
-        Path("_PROJ_ROOT + "/code_end"/data1_end/collet_mbco_0716.csv"),
-        Path("_PROJ_ROOT + "/code_end"/data1_end/collet_nics_0716.csv"),
+        Path(_PROJ_ROOT) / "archive/deprecated/code_end/data1_end/collet_homa_0716.csv",
+        Path(_PROJ_ROOT) / "archive/deprecated/code_end/data1_end/collet_mbco_0716.csv",
+        Path(_PROJ_ROOT) / "archive/deprecated/code_end/data1_end/collet_nics_0716.csv",
     ]
     smis: List[str] = []
     for p in paths:

@@ -13,10 +13,10 @@ from sklearn.model_selection import KFold, GroupKFold, GroupShuffleSplit
 
 from common.constants import AROMA_DATA_ROOT, LAST_END_ROOT
 
-# 数据目录 (优先环境变量, 回退到 code_end/data1_end 共用)
+# 数据目录 (优先环境变量; 回退到归档的 code_end/data1_end, 与 Fig.4 共用同一份输入)
 DATA1_END_DIR = os.environ.get(
     'DATA1_END_DIR',
-    os.path.join(os.path.dirname(LAST_END_ROOT), 'code_end', 'data1_end')
+    os.path.join(os.path.dirname(LAST_END_ROOT), 'archive', 'deprecated', 'code_end', 'data1_end')
 )
 
 TASKS = [

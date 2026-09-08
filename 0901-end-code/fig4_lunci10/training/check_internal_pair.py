@@ -37,24 +37,24 @@ _PROJ_ROOT = _d
 # --- End auto path bootstrap ---
 
 RDLogger.DisableLog("rdApp.*")
-from rdkit.Chem import MurckoScaffold  # noqa: E402
+from rdkit.Chem.Scaffolds import MurckoScaffold  # noqa: E402
 
-PROJ_ROOT = "_PROJ_ROOT"
-CODE_END = f"{PROJ_ROOT}/code_end"
+PROJ_ROOT = _PROJ_ROOT
+CODE_END = f"{PROJ_ROOT}/archive/deprecated/code_end"
 for p in (PROJ_ROOT, CODE_END):
     if Path(p).exists() and p not in sys.path:
         sys.path.insert(0, p)
 
-FIG4_ROOT = Path("_PROJ_ROOT/0901-end-code/fig4_lunci10")
-OUT_DIR = Path("_PROJ_ROOT/0901-end-code/results/fig4_lunci10_final/03_pairwise")
+FIG4_ROOT = Path(_PROJ_ROOT) / "0901-end-code/fig4_lunci10"
+OUT_DIR = Path(_PROJ_ROOT) / "0901-end-code/results/fig4_lunci10_final/03_pairwise"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 FEASIBILITY_JSON = OUT_DIR / "internal_pair_feasibility.json"
 INTERNAL_PAIR_CSV = OUT_DIR / "internal_pair_manifest.csv"
 
 INTERNAL_FILES = {
-    "HOMA": Path("_PROJ_ROOT + "/code_end"/data1_end/collet_homa_0716.csv"),
-    "MBCO": Path("_PROJ_ROOT + "/code_end"/data1_end/collet_mbco_0716.csv"),
-    "NICS_1zz": Path("_PROJ_ROOT + "/code_end"/data1_end/collet_nics_0716.csv"),
+    "HOMA": Path(_PROJ_ROOT) / "archive/deprecated/code_end/data1_end/collet_homa_0716.csv",
+    "MBCO": Path(_PROJ_ROOT) / "archive/deprecated/code_end/data1_end/collet_mbco_0716.csv",
+    "NICS_1zz": Path(_PROJ_ROOT) / "archive/deprecated/code_end/data1_end/collet_nics_0716.csv",
 }
 
 REQUIRED_COLS = {

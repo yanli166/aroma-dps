@@ -408,14 +408,14 @@ def predict_external_fast(model, node_mats, adj_mats, outputs, batch_size, devic
 def main():
     parser = argparse.ArgumentParser(description='GNN-label Optuna优化 (GPU高速版)')
     parser.add_argument('--dataset_path', type=str,
-                        default='_PROJ_ROOT/nics-nics1zz-out-no3.csv')
+                        default= os.path.join(_PROJ_ROOT, "nics-nics1zz-out-no3.csv"))
     parser.add_argument('--n_trials', type=int, default=25)
     parser.add_argument('--n_epochs', type=int, default=100)
     parser.add_argument('--final_epochs', type=int, default=300)
     parser.add_argument('--node_vec_len', type=int, default=60)
     parser.add_argument('--max_atoms', type=int, default=75)
     parser.add_argument('--output_dir', type=str,
-                        default='_PROJ_ROOT/gnn_label_optimized')
+                        default= os.path.join(_PROJ_ROOT, "gnn_label_optimized"))
     args = parser.parse_args()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -471,8 +471,8 @@ def main():
     # 4. 外部数据集评估
     print(f"\n========== 外部数据集评估 ==========")
     external_datasets = {
-        'collet_homa_0702': '_PROJ_ROOT/collet_homa_0702.csv',
-        'lunci2_mbcout': '_PROJ_ROOT/outcsv/lunci2-mbcout.csv',
+        'collet_homa_0702': os.path.join(_PROJ_ROOT, "collet_homa_0702.csv"),
+        'lunci2_mbcout': os.path.join(_PROJ_ROOT, "outcsv/lunci2-mbcout.csv"),
     }
 
     ext_results = {}

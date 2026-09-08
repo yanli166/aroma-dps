@@ -29,7 +29,7 @@ while not _os.path.exists(_os.path.join(_d, 'unified_models')) and _d != '/':
 _PROJ_ROOT = _d
 # --- End auto path bootstrap ---
 
-PROJ_ROOT = Path("_PROJ_ROOT")
+PROJ_ROOT = Path(_PROJ_ROOT)
 FIG4_ROOT = PROJ_ROOT / "0901-end-code" / "fig4_lunci10"
 REGISTRY_PATH = PROJ_ROOT / "0901-end-code" / "results" / "fig4_lunci10_final" / "run_registry.csv"
 

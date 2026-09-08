@@ -703,10 +703,10 @@ def run_final_eval(data, node_vec_len, device, output_root,
 def main():
     parser = argparse.ArgumentParser(description='15种模型统一超参优化')
     parser.add_argument('--dataset_path', type=str,
-                        default='_PROJ_ROOT/nics-nics1zz-out-no3.csv')
+                        default= os.path.join(_PROJ_ROOT, "nics-nics1zz-out-no3.csv"))
     parser.add_argument('--target_col', type=str, default='homa_value')
     parser.add_argument('--output_dir', type=str,
-                        default='_PROJ_ROOT/unified_optuna_15models')
+                        default= os.path.join(_PROJ_ROOT, "unified_optuna_15models"))
     parser.add_argument('--node_vec_len', type=int, default=60)
     parser.add_argument('--max_atoms', type=int, default=75)
     # Phase 1

@@ -328,7 +328,7 @@ def main():
     parser.add_argument('--n_epochs', type=int, default=200)
     parser.add_argument('--patience', type=int, default=30)
     parser.add_argument('--output_dir', type=str,
-                        default='_PROJ_ROOT/three_task_results')
+                        default= os.path.join(_PROJ_ROOT, "three_task_results"))
     parser.add_argument('--ring_flag_value', type=int, default=10,
                         help='目标环原子标记值 (默认 10, 设为 1 做 ablation)')
     args = parser.parse_args()
@@ -339,9 +339,9 @@ def main():
     print(f"ring_flag_value: {args.ring_flag_value}")
 
     tasks = [
-        ('homa_nics_original', '_PROJ_ROOT/nics-nics1zz-out-no3.csv'),
-        ('homa_collet_0702', '_PROJ_ROOT/collet_homa_0702.csv'),
-        ('mbco_lunci2', '_PROJ_ROOT/outcsv/lunci2-mbcout.csv'),
+        ('homa_nics_original', os.path.join(_PROJ_ROOT, "nics-nics1zz-out-no3.csv")),
+        ('homa_collet_0702', os.path.join(_PROJ_ROOT, "collet_homa_0702.csv")),
+        ('mbco_lunci2', os.path.join(_PROJ_ROOT, "outcsv/lunci2-mbcout.csv")),
     ]
 
     all_results = []

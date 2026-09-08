@@ -1,0 +1,7 @@
+{
+  "n_spectator_pairs_input": 5722,
+  "n_samples_total": 11424,
+  "n_samples_pass": 11266,
+  "n_samples_error": 158,
+  "n_pairs_with_both_RP_pass": 5592
+}

@@ -1,0 +1,45 @@
+# 第三层: 三类环信息编码范式对比实验配置
+layer: 3
+name: ring_encoding_ablation
+
+# 模型选择: 从第二层 top5 自动选取 (按三任务平均 test R2)
+top5_source: /home/ubuntu/aroma-dps-code/baseline_gnn/results/all_gnn_summary.csv
+backbone_models: [GNN, GIN, GAT, MPNN, GraphSAGE]  # 候选 (实际取 top5)
+
+# 三种环编码范式
+encodings:
+  label:                    # 环标记 - 节点输入特征层
+    position: node_input
+    ring_flag_value: 10
+    desc: 在目标环原子的节点特征中注入标记, 与原 GNN-label 一致
+  mask:                     # 环掩码 - 卷积特征传播层 (自监督式)
+    position: conv_propagation
+    desc: 用 mask_mat 过滤非目标环原子特征, 模拟芳香电子离域
+  pool:                     # 环池化 - 卷积特征输出层
+    position: conv_output
+    desc: 按 ring_indices 对环内原子定向聚合 (0.7*ring + 0.3*global)
+  combined:                 # RA-GCN 最终: label+mask+pool 联合
+    position: all_layers
+    desc: 三种编码叠加, 输出完整 RA-GCN 性能
+
+# 超参 (与第二层一致)
+hyperparams:
+  hidden_dim: 128
+  n_conv_layers: 3
+  n_hidden_layers: 2
+  learning_rate: 0.001
+  p_dropout: 0.2
+  batch_size: 64
+  weight_decay: 1.0e-5
+  n_epochs: 200
+  patience: 30
+
+tasks: [HOMA, NICS_1zz, MBCO]
+split: {method: 8/2 holdout + 5-fold CV, test_size: 0.2, n_folds: 5, seed: 42}
+metrics: [R2, MAE, RMSE]
+
+# RA-GCN 组合模型
+ragcn:
+  model: RAGCNCombined (ring_encoding_ablation/code/combined_ragcn.py)
+  backbone: 复用原始卷积层 (不改动骨干)
+  combination: label(数据层) + mask(传播层) + pool(输出层)

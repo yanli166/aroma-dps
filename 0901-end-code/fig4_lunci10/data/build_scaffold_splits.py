@@ -32,7 +32,7 @@ from rdkit.Chem.Scaffolds import MurckoScaffold
 RDLogger.DisableLog("rdApp.*")
 
 PROJ_ROOT = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-CODE_END = PROJ_ROOT / "code_end"
+CODE_END = PROJ_ROOT / "archive/deprecated/code_end"
 DATA1_END = CODE_END / "data1_end"
 AUDIT_OUT = PROJ_ROOT / "0901-end-code/results/fig4_lunci10_final/00_audit"
 SPLIT_OUT = PROJ_ROOT / "0901-end-code/results/fig4_lunci10_final/02_scaffold_splits"

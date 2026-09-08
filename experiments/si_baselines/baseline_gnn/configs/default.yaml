@@ -1,0 +1,43 @@
+# 第二层: 通用图神经网络基线实验配置
+layer: 2
+name: baseline_gnn
+
+# 模型 (6个, vanilla 无目标环标记)
+models:
+  custom_adj_format:   # 邻接矩阵格式, ring_flag_value=0
+    - GNN        # 基础GCN (Kipf&Welling)
+    - GIN        # Graph Isomorphism Network
+    - GAT        # Graph Attention Network
+    - MPNN       # Message Passing Neural Network (Gilmer 2017)
+    - GraphSAGE  # Inductive Representation Learning (Hamilton 2017)
+  pyg_edge_format:     # PyG edge_index 格式
+    - AttentiveFP # 基于 GATConv 复现 (JCIM 2019)
+    - DMPNN        # Directed MPNN (Yang et al. 2019)
+
+# 节点特征
+node_features:
+  node_vec_len: 60
+  max_atoms: 75
+  ring_flag_value: 0   # vanilla: 不注入目标环标记 (第三层再加)
+
+# 超参 (统一, 与原 0427 实验一致)
+hyperparams:
+  hidden_dim: 128
+  n_conv_layers: 3
+  n_hidden_layers: 2
+  learning_rate: 0.001
+  p_dropout: 0.2
+  batch_size: 64
+  weight_decay: 1.0e-5
+  n_epochs: 200
+  patience: 30
+
+# 任务与划分 (与第一层一致)
+tasks: [HOMA, NICS_1zz, MBCO]
+split:
+  method: 8/2 holdout + 5-fold CV
+  test_size: 0.2
+  n_folds: 5
+  seed: 42
+
+metrics: [R2, MAE, RMSE]

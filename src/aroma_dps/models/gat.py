@@ -1,5 +1,4 @@
-"""GAT backbone. Re-export from unified_models."""
-try:
-    from unified_models.gat.model import MultiHeadGAT, GATModel
-except ImportError:
-    pass
+"""GAT backbone (vendored from unified_models/gat/model.py)."""
+from aroma_dps.models.backbones.gat import GATModel, MultiHeadGAT
+
+__all__ = ['GATModel', 'MultiHeadGAT']

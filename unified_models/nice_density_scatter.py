@@ -21,8 +21,8 @@ import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 from sklearn.metrics import r2_score
 
-RESULTS_DIR = '_PROJ_ROOT/three_task_results'
-OUTPUT_DIR = '_PROJ_ROOT/gnn_label_complete/results/three_task_eval/enhanced_plots'
+RESULTS_DIR = os.path.join(_PROJ_ROOT, "three_task_results")
+OUTPUT_DIR = os.path.join(_PROJ_ROOT, "gnn_label_complete/results/three_task_eval/enhanced_plots")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 TASKS = [

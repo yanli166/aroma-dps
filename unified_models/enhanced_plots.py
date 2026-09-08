@@ -24,7 +24,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from scipy.stats import gaussian_kde
 from sklearn.metrics import r2_score
 
-PROJ_ROOT = '_PROJ_ROOT'
+PROJ_ROOT = _PROJ_ROOT
 RESULTS_DIR = os.path.join(PROJ_ROOT, 'three_task_results')
 OUTPUT_DIR = os.path.join(PROJ_ROOT, 'gnn_label_complete', 'results', 'three_task_eval')
 

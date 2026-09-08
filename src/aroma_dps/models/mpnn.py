@@ -1,5 +1,4 @@
-"""MPNN: DMPNN model (PyG-based). Re-export from 0831-end-code."""
-try:
-    from models.pyg_models import DMPNNModel, build_pyg_model
-except ImportError:
-    pass
+"""MPNN backbones (vendored from unified_models/mpnn/model.py)."""
+from aroma_dps.models.backbones.mpnn import MPNNLayer, MPNNModel
+
+__all__ = ['MPNNLayer', 'MPNNModel']

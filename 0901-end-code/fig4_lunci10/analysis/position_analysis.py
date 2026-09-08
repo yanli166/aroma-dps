@@ -31,19 +31,19 @@ while not _os.path.exists(_os.path.join(_d, 'unified_models')) and _d != '/':
 _PROJ_ROOT = _d
 # --- End auto path bootstrap ---
 
-PROJ_ROOT = "_PROJ_ROOT"
-CODE_END = f"{PROJ_ROOT}/code_end"
+PROJ_ROOT = _PROJ_ROOT
+CODE_END = f"{PROJ_ROOT}/archive/deprecated/code_end"
 for p in (PROJ_ROOT, CODE_END):
     if Path(p).exists() and p not in sys.path:
         sys.path.insert(0, p)
 
 from layer4_substituent.code.hammett_constants import identify_substituents  # type: ignore
 
-FIG4_ROOT = Path("_PROJ_ROOT/0901-end-code/fig4_lunci10")
-MANIFEST_PATH = Path("_PROJ_ROOT/0901-end-code/results/fig4_lunci10_final/00_audit/lunci10_manifest.csv")
-ABSOLUTE_CSV = Path("_PROJ_ROOT/0901-end-code/results/fig4_lunci10_final/01_external_absolute/lunci10_absolute_predictions.csv")
+FIG4_ROOT = Path(_PROJ_ROOT) / "0901-end-code/fig4_lunci10"
+MANIFEST_PATH = Path(_PROJ_ROOT) / "0901-end-code/results/fig4_lunci10_final/00_audit/lunci10_manifest.csv"
+ABSOLUTE_CSV = Path(_PROJ_ROOT) / "0901-end-code/results/fig4_lunci10_final/01_external_absolute/lunci10_absolute_predictions.csv"
 
-OUT_DIR = Path("_PROJ_ROOT/0901-end-code/results/fig4_lunci10_final/06_position")
+OUT_DIR = Path(_PROJ_ROOT) / "0901-end-code/results/fig4_lunci10_final/06_position"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 POSITION_CSV = OUT_DIR / "position_effect_summary.csv"
 

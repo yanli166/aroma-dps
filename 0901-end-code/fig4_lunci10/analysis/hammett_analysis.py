@@ -41,23 +41,23 @@ while not _os.path.exists(_os.path.join(_d, 'unified_models')) and _d != '/':
 _PROJ_ROOT = _d
 # --- End auto path bootstrap ---
 
-PROJ_ROOT = "_PROJ_ROOT"
-CODE_END = f"{PROJ_ROOT}/code_end"
+PROJ_ROOT = _PROJ_ROOT
+CODE_END = f"{PROJ_ROOT}/archive/deprecated/code_end"
 for p in (PROJ_ROOT, CODE_END):
     if Path(p).exists() and p not in sys.path:
         sys.path.insert(0, p)
 
 # 必须 import 原项目 Hammett constants
+# (HAMMETT_SIGMA_META/PARA 在 hammett_constants 中并不存在, σ 值已在 HAMMETT_TABLE 行内, 本文件也未使用)
 from layer4_substituent.code.hammett_constants import (  # type: ignore
-    HAMMETT_SIGMA_META, HAMMETT_SIGMA_PARA,
     identify_substituents, HAMMETT_TABLE,
 )
 
-FIG4_ROOT = Path("_PROJ_ROOT/0901-end-code/fig4_lunci10")
-MANIFEST_PATH = Path("_PROJ_ROOT/0901-end-code/results/fig4_lunci10_final/00_audit/lunci10_manifest.csv")
-ABSOLUTE_CSV = Path("_PROJ_ROOT/0901-end-code/results/fig4_lunci10_final/01_external_absolute/lunci10_absolute_predictions.csv")
+FIG4_ROOT = Path(_PROJ_ROOT) / "0901-end-code/fig4_lunci10"
+MANIFEST_PATH = Path(_PROJ_ROOT) / "0901-end-code/results/fig4_lunci10_final/00_audit/lunci10_manifest.csv"
+ABSOLUTE_CSV = Path(_PROJ_ROOT) / "0901-end-code/results/fig4_lunci10_final/01_external_absolute/lunci10_absolute_predictions.csv"
 
-OUT_DIR = Path("_PROJ_ROOT/0901-end-code/results/fig4_lunci10_final/05_hammett")
+OUT_DIR = Path(_PROJ_ROOT) / "0901-end-code/results/fig4_lunci10_final/05_hammett"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 ANCHOR_COV_CSV = OUT_DIR / "anchor_coverage.csv"
 MATCH_CSV = OUT_DIR / "hammett_matches.csv"

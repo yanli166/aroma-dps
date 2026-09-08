@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 PROJ_ROOT = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-CODE_END = PROJ_ROOT / "code_end"
+CODE_END = PROJ_ROOT / "archive/deprecated/code_end"
 
 LAYER2_GNN_DIR = CODE_END / "results/layer2_gnn"
 LAYER3_RING_DIR = CODE_END / "results/layer3_ring_fixed"

@@ -96,11 +96,15 @@ def assert_no_leak(
     )
 
 
-def canonical_splits(*args, **kwargs):
+def canonical_splits(n_samples, seed=42, groups=None, test_size=0.2, n_folds=5):
     """DEPRECATED: Use get_final_splits() instead.
 
-    This wrapper preserves backward compatibility for historical
-    checkpoint/result loaders that may import canonical_splits.
+    Keeps the historical call shape (n_samples, seed, groups) and translates it
+    onto the publication API. The split is NOT identical to the historical one
+    (this protocol uses a fixed 80/20 group holdout, GroupKFold within dev and a
+    90/10 final train/val cut), but argument binding is now explicit, so a
+    misplaced seed fails loudly instead of silently becoming `groups`.
+
     Retained for 6-12 months, then will be removed.
     """
     warnings.warn(
@@ -109,7 +113,15 @@ def canonical_splits(*args, **kwargs):
         DeprecationWarning,
         stacklevel=2,
     )
-    # Delegate to get_final_splits with the provided arguments
-    # Note: this may not produce identical splits to the historical
-    # canonical_splits, but it ensures the import path remains valid.
-    return get_final_splits(*args, **kwargs)
+    if groups is None:
+        raise ValueError(
+            "get_final_splits requires group-aware splitting (parent-molecule SMILES); "
+            "the legacy sample-level fallback is not publication-safe."
+        )
+    return get_final_splits(
+        n_total=n_samples,
+        groups=groups,
+        test_size=test_size,
+        n_folds=n_folds,
+        split_seed=seed,
+    )

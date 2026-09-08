@@ -18,7 +18,7 @@ import pandas as pd
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 # fig4_lunci10/data/ -> fig4_lunci10/ -> 0901-end-code/ -> aroma-dps/
 PROJ_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(_THIS_DIR)))
-for p in (PROJ_ROOT, os.path.join(PROJ_ROOT, "code_end")):
+for p in (PROJ_ROOT, os.path.join(PROJ_ROOT, "archive/deprecated/code_end")):
     if Path(p).exists() and p not in sys.path:
         sys.path.insert(0, p)
 

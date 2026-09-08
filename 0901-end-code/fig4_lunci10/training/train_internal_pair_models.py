@@ -42,15 +42,15 @@ while not _os.path.exists(_os.path.join(_d, 'unified_models')) and _d != '/':
 _PROJ_ROOT = _d
 # --- End auto path bootstrap ---
 
-PROJ_ROOT = "_PROJ_ROOT"
-CODE_END = f"{PROJ_ROOT}/code_end"
-ORIG_MODELS_ROOT = "_PROJ_ROOT + "/unified_models""
+PROJ_ROOT = _PROJ_ROOT
+CODE_END = f"{PROJ_ROOT}/archive/deprecated/code_end"
+ORIG_MODELS_ROOT = _os.path.join(_PROJ_ROOT, "unified_models")
 for p in (PROJ_ROOT, CODE_END, ORIG_MODELS_ROOT):
     if Path(p).exists() and p not in sys.path:
         sys.path.insert(0, p)
 
-FIG4_ROOT = Path("_PROJ_ROOT/0901-end-code/fig4_lunci10")
-PAIR_DIR = Path("_PROJ_ROOT/0901-end-code/results/fig4_lunci10_final/03_pairwise")
+FIG4_ROOT = Path(_PROJ_ROOT) / "0901-end-code/fig4_lunci10"
+PAIR_DIR = Path(_PROJ_ROOT) / "0901-end-code/results/fig4_lunci10_final/03_pairwise"
 PAIR_DIR.mkdir(parents=True, exist_ok=True)
 LUNCI10_PAIR = PAIR_DIR / "lunci10_pair_manifest.csv"
 INTERNAL_PAIR = PAIR_DIR / "internal_pair_manifest.csv"
@@ -633,7 +633,7 @@ def main(
         raise FileNotFoundError(f"missing lunci10 pair manifest: {LUNCI10_PAIR}")
     lunci10_pair_df = pd.read_csv(LUNCI10_PAIR)
     lunci10_manifest = pd.read_csv(
-        Path("_PROJ_ROOT/0901-end-code/results/fig4_lunci10_final/00_audit/lunci10_manifest.csv")
+        Path(_PROJ_ROOT) / "0901-end-code/results/fig4_lunci10_final/00_audit/lunci10_manifest.csv"
     )
 
     # internal 资源 (若 Protocol I 可行)
@@ -642,9 +642,9 @@ def main(
     if INTERNAL_PAIR.is_file():
         internal_pair_df = pd.read_csv(INTERNAL_PAIR)
         for task, p in [
-            ("HOMA", Path("_PROJ_ROOT + "/code_end"/data1_end/collet_homa_0716.csv")),
-            ("MBCO", Path("_PROJ_ROOT + "/code_end"/data1_end/collet_mbco_0716.csv")),
-            ("NICS_1zz", Path("_PROJ_ROOT + "/code_end"/data1_end/collet_nics_0716.csv")),
+            ("HOMA", Path(_PROJ_ROOT) / "archive/deprecated/code_end/data1_end/collet_homa_0716.csv"),
+            ("MBCO", Path(_PROJ_ROOT) / "archive/deprecated/code_end/data1_end/collet_mbco_0716.csv"),
+            ("NICS_1zz", Path(_PROJ_ROOT) / "archive/deprecated/code_end/data1_end/collet_nics_0716.csv"),
         ]:
             if p.is_file():
                 df = pd.read_csv(p)

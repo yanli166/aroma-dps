@@ -35,7 +35,7 @@ import torch.nn as nn
 from scipy import stats
 
 PROJ_ROOT = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-CODE_END = PROJ_ROOT / "code_end"
+CODE_END = PROJ_ROOT / "archive/deprecated/code_end"
 DATA1_END = CODE_END / "data1_end"
 ORIG_MODELS_ROOT = str(PROJ_ROOT / "unified_models")
 SPLIT_DIR = PROJ_ROOT / "0901-end-code/results/fig4_lunci10_final/02_scaffold_splits"

@@ -24,7 +24,7 @@ from scipy import stats
 
 # path bootstrap
 PROJ_ROOT = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-CODE_END = PROJ_ROOT / "code_end"
+CODE_END = PROJ_ROOT / "archive/deprecated/code_end"
 ORIG_MODELS_ROOT = str(PROJ_ROOT / "unified_models")
 for p in (str(PROJ_ROOT), str(CODE_END), ORIG_MODELS_ROOT):
     if Path(p).is_dir() and p not in sys.path:

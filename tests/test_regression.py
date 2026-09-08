@@ -21,6 +21,8 @@ import pytest
 
 # Ensure src is on path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+# Repo root too: some tests import the legacy unified_models package directly
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 # --- Test data ---
@@ -95,6 +97,40 @@ class TestRingIndexRoundtrip:
             target_atom_indices_model(SMILES_BENZENE, [0, 1, 2, 3, 4, 5, 6])
 
 
+class TestGraphConsumesZeroBased:
+    """`unified_models.common.graphs.Graph` treats atom_on_ring as 0-based, verbatim.
+
+    Pinned because a Fig.5 script (lunci8/predict_lunci8.py) passes 1-based indices,
+    which silently drops a real ring atom and flags a non-ring atom instead.
+    """
+
+    SMILES = "c1ccccc1C(=O)O"          # ring atoms 0-5; C(=O)O carbon is atom 6
+    RING_0BASED = [0, 1, 2, 3, 4, 5]
+
+    @staticmethod
+    def _flagged_atoms(graph, plain):
+        a = np.asarray(plain.node_mat, dtype=float)
+        b = np.asarray(graph.node_mat, dtype=float)
+        cols = [j for j in range(a.shape[1]) if not np.allclose(a[:, j], b[:, j])]
+        assert cols, "no ring-flag column differs from the unflagged graph"
+        return np.nonzero(np.abs(b[:, cols[0]]) > 1e-9)[0].tolist()
+
+    def test_zero_based_input_flags_exactly_those_atoms(self):
+        from unified_models.common.graphs import Graph
+        flagged = self._flagged_atoms(Graph(self.SMILES, self.RING_0BASED, 60),
+                                       Graph(self.SMILES, [], 60))
+        assert flagged == self.RING_0BASED
+
+    def test_one_based_input_mislabels_atoms(self):
+        from unified_models.common.graphs import Graph
+        shifted = [i + 1 for i in self.RING_0BASED]
+        flagged = self._flagged_atoms(Graph(self.SMILES, shifted, 60),
+                                      Graph(self.SMILES, [], 60))
+        assert flagged == shifted
+        assert self.RING_0BASED[0] not in flagged      # real ring atom loses its flag
+        assert shifted[-1] not in self.RING_0BASED     # flagged atom is not in the ring
+
+
 class TestSplitLeakage:
     """Test that same molecule's rings stay in the same split."""
 
@@ -140,16 +176,56 @@ class TestSplitLeakage:
 
 
 class TestCanonicalSplitsDeprecation:
-    """Test that canonical_splits emits DeprecationWarning."""
+    """Test that canonical_splits warns and delegates without mis-binding args."""
 
-    def test_deprecation_warning(self):
+    def test_deprecation_warning_and_delegation(self):
+        from aroma_dps.data.splits import canonical_splits
+        groups = np.array([f"mol_{i // 4}" for i in range(100)])
+        with pytest.warns(DeprecationWarning):
+            test_idx, cv_folds, final_train, final_val = canonical_splits(100, groups=groups)
+        assert len(cv_folds) == 5
+        assert len(set(test_idx) & set(final_train)) == 0
+
+    def test_legacy_positional_signature_still_binds(self):
+        # Historical call shape was canonical_splits(n_samples, seed, groups).
+        from aroma_dps.data.splits import canonical_splits
+        groups = np.array([f"mol_{i // 4}" for i in range(100)])
+        with pytest.warns(DeprecationWarning):
+            test_idx, _, _, _ = canonical_splits(100, 42, groups)
+        assert len(test_idx) > 0
+
+    def test_groups_are_required(self):
         from aroma_dps.data.splits import canonical_splits
         with pytest.warns(DeprecationWarning):
-            # This will delegate to get_final_splits
-            try:
-                canonical_splits(100, groups=np.array([f"mol_{i}" for i in range(100)]))
-            except Exception:
-                pass  # May fail due to argument mismatch, but warning should fire
+            with pytest.raises(ValueError):
+                canonical_splits(100)
+
+
+class TestRingFamilyAndDelta:
+    """Vendored chemistry helpers must not confuse saturated rings with aromatics."""
+
+    def test_aromatic_family_labels(self):
+        from aroma_dps.chemistry.ring_family import ring_family_of
+        assert ring_family_of('c1ccccc1', [0, 1, 2, 3, 4, 5])[3] == 'benzene-like'
+        assert ring_family_of('c1ccncc1', [0, 1, 2, 3, 4, 5])[3] == 'pyridine-like'
+        assert ring_family_of('c1ccoc1', [0, 1, 2, 3, 4])[3] == 'furan-like'
+
+    def test_saturated_ring_is_not_benzene(self):
+        from aroma_dps.chemistry.ring_family import ring_family_of
+        label = ring_family_of('C1CCCCC1', [0, 1, 2, 3, 4, 5])[3]
+        assert label == 'nonaromatic_6(C)'
+
+    def test_out_of_range_indices_rejected(self):
+        # 1-based input would push the last index out of range; must not silently pass.
+        from aroma_dps.chemistry.ring_family import extract_target_ring_smiles
+        assert extract_target_ring_smiles('c1ccccc1', [1, 2, 3, 4, 5, 6]) == ''
+
+    def test_delta_sign_conventions(self):
+        from aroma_dps.inference.ring_prediction import aromaticity_loss
+        assert aromaticity_loss('HOMA', 0.9, 0.3) == pytest.approx(0.6)
+        assert aromaticity_loss('MCBO', 0.9, 0.3) == pytest.approx(0.6)
+        # NICS is negative for aromatic rings: loss means going towards zero.
+        assert aromaticity_loss('NICS_1zz', -8.0, -2.0) == pytest.approx(6.0)
 
 
 class TestScalerTrainOnly:
@@ -240,6 +316,23 @@ class TestProvenanceTaskTracking:
             rec = prov["records"][0]
             assert rec["task"]["canonical"] == "MCBO"
             assert rec["task"]["original_label"] == "MBCO"
+
+
+class TestConfigPaths:
+    """config.REPO_ROOT must be the repository root, not a parent of it."""
+
+    def test_repo_root_is_the_package_containing_src(self):
+        from aroma_dps import config
+        root = Path(config.REPO_ROOT)
+        assert (root / "src" / "aroma_dps" / "config.py").is_file()
+        assert root == Path(__file__).resolve().parent.parent
+
+    def test_data_and_model_dirs_resolve_inside_repo(self):
+        from aroma_dps import config
+        for name in ("COLLET_DIR", "LUNCI10_DIR", "MODELS_DIR", "ORIG_MODELS_ROOT"):
+            path = Path(getattr(config, name))
+            assert path.is_dir(), f"{name} -> {path} does not exist"
+            assert path.is_relative_to(Path(config.REPO_ROOT).resolve())
 
 
 if __name__ == "__main__":

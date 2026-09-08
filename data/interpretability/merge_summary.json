@@ -1,0 +1,40 @@
+{
+  "HOMA": {
+    "n_collet_full": 6854,
+    "n_e_dropped": 224,
+    "n_collet_ab": 6630,
+    "n_dev": 5295,
+    "n_test": 1335,
+    "n_l10_added": 2122,
+    "n_l10_dup_with_ab_removed": -2092,
+    "n_merged_total": 8752,
+    "n_test_molecules": 743
+  },
+  "NICS_1zz": {
+    "n_collet_full": 6820,
+    "n_e_dropped": 228,
+    "n_collet_ab": 6592,
+    "n_dev": 5311,
+    "n_test": 1281,
+    "n_l10_added": 2152,
+    "n_l10_dup_with_ab_removed": -2152,
+    "n_merged_total": 8744,
+    "n_test_molecules": 738
+  },
+  "MBCO": {
+    "n_collet_full": 6923,
+    "n_e_dropped": 224,
+    "n_collet_ab": 6699,
+    "n_dev": 5360,
+    "n_test": 1339,
+    "n_l10_added": 2152,
+    "n_l10_dup_with_ab_removed": -2152,
+    "n_merged_total": 8851,
+    "n_test_molecules": 747
+  },
+  "_l10_meta": {
+    "n_l10_raw": 2153,
+    "n_l10_nan_mol_id": 0,
+    "unique_mol_l10": 1389
+  }
+}

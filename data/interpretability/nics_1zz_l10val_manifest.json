@@ -1,0 +1,12 @@
+{
+  "task": "NICS_1zz",
+  "collet_ab_train": 6592,
+  "l10_train_molecules": 1087,
+  "l10_val_molecules": 272,
+  "l10_val_molecules_in_homa": 272,
+  "l10_train_records": 1687,
+  "l10_val_records": 436,
+  "extra_l10_train_records": 29,
+  "total_train_records": 8279,
+  "total_val_records": 436
+}

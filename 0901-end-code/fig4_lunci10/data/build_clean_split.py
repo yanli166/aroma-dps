@@ -29,7 +29,7 @@ RDLogger.DisableLog("rdApp.*")
 from rdkit.Chem.inchi import MolToInchiKey
 
 PROJ_ROOT = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-CODE_END = PROJ_ROOT / "code_end"
+CODE_END = PROJ_ROOT / "archive/deprecated/code_end"
 FIG4_ROOT = PROJ_ROOT / "0901-end-code/fig4_lunci10"
 AUDIT_OUT = PROJ_ROOT / "0901-end-code/results/fig4_lunci10_final/00_audit"
 

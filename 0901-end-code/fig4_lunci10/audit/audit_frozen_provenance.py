@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 PROJ_ROOT = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-CODE_END = PROJ_ROOT / "code_end"
+CODE_END = PROJ_ROOT / "archive/deprecated/code_end"
 FIG4_ROOT = PROJ_ROOT / "0901-end-code/fig4_lunci10"
 AUDIT_OUT = PROJ_ROOT / "0901-end-code/results/fig4_lunci10_final/00_audit"
 
@@ -77,7 +77,7 @@ def find_l10_provenance() -> List[Dict[str, Any]]:
         re.compile(r"ring_flag.*lunci10", re.IGNORECASE),
         re.compile(r"projection.*lunci10", re.IGNORECASE),
     ]
-    code_root = PROJ_ROOT / "code_end"
+    code_root = PROJ_ROOT / "archive/deprecated/code_end"
     if not code_root.is_dir():
         return red_flags
     for f in code_root.rglob("*.py"):

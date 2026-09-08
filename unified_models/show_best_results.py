@@ -18,7 +18,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from scipy import stats
 
-RESULTS_ROOT = '_PROJ_ROOT/0427_unified_results'
+RESULTS_ROOT = os.path.join(_PROJ_ROOT, "0427_unified_results")
 SAVE_DIR = os.path.join(RESULTS_ROOT, 'best_results')
 os.makedirs(SAVE_DIR, exist_ok=True)
 

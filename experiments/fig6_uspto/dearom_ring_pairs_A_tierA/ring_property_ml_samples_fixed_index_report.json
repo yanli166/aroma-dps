@@ -1,0 +1,17 @@
+{
+  "n_samples": 8886,
+  "n_pass": 8886,
+  "n_fail": 0,
+  "n_index_changed": 2347,
+  "fraction_index_changed": 0.2641233400855278,
+  "n_existing_smiles_structure_match": 8886,
+  "n_target_cycle_valid": 8886,
+  "status_counts": {
+    "PASS_UNCHANGED": 6539,
+    "PASS_REINDEXED": 2347
+  },
+  "model_input_columns": {
+    "smiles": "smiles_model",
+    "ring_indices": "target_atom_indices_model"
+  }
+}

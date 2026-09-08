@@ -20,7 +20,7 @@ import torch
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 # fig4_lunci10/training/ -> fig4_lunci10/ -> 0901-end-code/ -> aroma-dps/
 PROJ_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(_THIS_DIR)))
-CODE_END = os.path.join(PROJ_ROOT, "code_end")
+CODE_END = os.path.join(PROJ_ROOT, "archive/deprecated/code_end")
 OUT = os.path.join(CODE_END, "results", "layer3_ring_fixed")
 
 for p in (PROJ_ROOT, CODE_END):

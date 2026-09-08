@@ -1,0 +1,9 @@
+{
+  "tier_requested": "A",
+  "n_ring_pairs": 4443,
+  "n_ml_samples": 8886,
+  "n_errors": 0,
+  "same_cycle_edge_fraction": 1.0,
+  "mean_ring_edge_retention": 1.0,
+  "local_radius": 2
+}

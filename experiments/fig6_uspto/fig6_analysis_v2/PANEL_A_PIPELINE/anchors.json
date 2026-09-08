@@ -1,0 +1,9 @@
+{
+  "USPTO_STEREO_reactions": 1002915,
+  "Tier_A_reactions": 4306,
+  "Tier_A_target_ring_pairs": 4443,
+  "complete_RP_pairs": 4377,
+  "spectator_rings_predicted": 5592,
+  "spectator_rings_input": 5722,
+  "all_ring_pairs": 10221
+}

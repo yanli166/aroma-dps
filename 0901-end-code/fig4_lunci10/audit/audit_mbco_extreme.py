@@ -28,7 +28,7 @@ _PROJ_ROOT = _d
 
 RDLogger.DisableLog("rdApp.*")
 
-PROJ_ROOT = Path("_PROJ_ROOT")
+PROJ_ROOT = Path(_PROJ_ROOT)
 AUDIT_OUT = PROJ_ROOT / "0901-end-code/results/fig4_lunci10_final/00_audit"
 CLEAN_MANIFEST = AUDIT_OUT / "lunci10_clean_manifest.csv"
 

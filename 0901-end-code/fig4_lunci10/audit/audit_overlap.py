@@ -33,13 +33,13 @@ from rdkit.Chem import AllChem
 from rdkit.Chem.Scaffolds import MurckoScaffold
 from rdkit.Chem.inchi import MolToInchiKey
 
-PROJ_ROOT = "_PROJ_ROOT"
-for p in (PROJ_ROOT, f"{PROJ_ROOT}/code_end"):
+PROJ_ROOT = _PROJ_ROOT
+for p in (PROJ_ROOT, f"{PROJ_ROOT}/archive/deprecated/code_end"):
     if Path(p).exists() and p not in sys.path:
         sys.path.insert(0, p)
 
-FIG4_ROOT = Path("_PROJ_ROOT/0901-end-code/fig4_lunci10")
-AUDIT_OUT = Path("_PROJ_ROOT/0901-end-code/results/fig4_lunci10_final/00_audit")
+FIG4_ROOT = Path(_PROJ_ROOT) / "0901-end-code/fig4_lunci10"
+AUDIT_OUT = Path(_PROJ_ROOT) / "0901-end-code/results/fig4_lunci10_final/00_audit"
 MANIFEST_PATH = AUDIT_OUT / "lunci10_manifest.csv"
 CONFIG_PATH = FIG4_ROOT / "configs" / "fig4_lunci10.yaml"
 OUT_CSV = AUDIT_OUT / "lunci10_overlap_audit.csv"
